@@ -1,0 +1,3 @@
+[submodule "crates/fastcdc-rs"]
+	path = crates/fastcdc-rs
+	url = git@github.com:Vlm326/fastcdc-rs.git

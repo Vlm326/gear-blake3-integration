@@ -1,64 +1,26 @@
 use fastcdc::v2020::StreamCDC;
-use std::{
-    error::Error,
-    fs::{self, File},
-    io,
-    path::{Path, PathBuf},
-};
+use std::{error::Error, hint::black_box, io::Read};
 
-pub fn collect_files(path: &Path, files: &mut Vec<PathBuf>) -> Result<(), Box<dyn Error>> {
-    let metadata = fs::metadata(path)?;
-    if metadata.is_file() {
-        files.push(path.to_path_buf());
-    } else if metadata.is_dir() {
-        for entry in fs::read_dir(path)? {
-            let entry = entry?;
-            let file_type = entry.file_type()?;
-            if file_type.is_file() || file_type.is_dir() {
-                collect_files(&entry.path(), files)?;
-            }
-        }
-    } else {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("not a regular file or directory: {}", path.display()),
-        )
-        .into());
-    }
+pub fn process_file_base<R: Read>(reader: R) -> Result<(), Box<dyn Error>> {
+    let chunker = StreamCDC::new(reader, 16 * 1024, 64 * 1024, 256 * 1024);
 
-    Ok(())
-}
-
-pub fn process_file_base(path: &Path) -> Result<(), Box<dyn Error>> {
-    let file = File::open(path)?;
-    let chunker = StreamCDC::new(file, 16 * 1024, 64 * 1024, 256 * 1024);
+    // Базовый вариант сначала сохраняет все чанки, а затем отдельным проходом
+    // вычисляет BLAKE3 по каждому сохранённому буферу.
     let chunks = chunker.collect::<Result<Vec<_>, _>>()?;
+    let mut total_bytes = 0u64;
 
-    let chunk_digests: Vec<_> = chunks
-        .iter()
-        .map(|chunk| super::types::ChunkDigest {
+    for chunk in &chunks {
+        total_bytes += chunk.length as u64;
+        // Дайджест должен оставаться наблюдаемым, иначе оптимизатор может
+        // удалить вычисление, результат которого больше нигде не используется.
+        let result = super::types::ChunkDigest {
             offset: chunk.offset,
             length: chunk.length,
             digest: blake3::hash(&chunk.data),
-        })
-        .collect();
-
-    for chunk_digest in &chunk_digests {
-        println!(
-            "file={} offset={} size={} blake3={}",
-            path.display(),
-            chunk_digest.offset,
-            chunk_digest.length,
-            chunk_digest.digest
-        );
+        };
+        black_box((result.offset, result.length, result.digest));
     }
 
-    let total_bytes: u64 = chunk_digests.iter().map(|chunk| chunk.length as u64).sum();
-    eprintln!(
-        "mode=baseline file={} chunks={} bytes={total_bytes}",
-        path.display(),
-        chunk_digests.len()
-    );
-
+    black_box((chunks.len(), total_bytes));
     Ok(())
 }

@@ -415,9 +415,12 @@ fn feed_blake3_progress(
     fed_until: &mut usize,
     scanned_until: usize,
 ) {
-    const BLAKE3_BATCH: usize = 64;
+    let blake3_batch: usize = std::env::var("BLAKE3_BATCH")
+        .unwrap_or_else(|_| "64".to_string())
+        .parse()
+        .unwrap();
 
-    if scanned_until - *fed_until >= BLAKE3_BATCH {
+    if scanned_until - *fed_until >= blake3_batch {
         hasher.update(&source[*fed_until..scanned_until]);
         *fed_until = scanned_until;
     }

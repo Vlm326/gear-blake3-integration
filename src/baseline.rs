@@ -2,7 +2,19 @@ use fastcdc::v2020::StreamCDC;
 use std::{error::Error, hint::black_box, io::Read};
 
 pub fn process_file_base<R: Read>(reader: R) -> Result<(), Box<dyn Error>> {
-    let chunker = StreamCDC::new(reader, 16 * 1024, 64 * 1024, 256 * 1024);
+    let min_chunk = std::env::var("MIN_CHUNK_SIZE")
+        .unwrap_or_else(|_| "16384".to_string())
+        .parse()
+        .unwrap();
+    let avg_chunk = std::env::var("AVG_CHUNK_SIZE")
+        .unwrap_or_else(|_| "65536".to_string())
+        .parse()
+        .unwrap();
+    let max_chunk = std::env::var("MAX_CHUNK_SIZE")
+        .unwrap_or_else(|_| "262144".to_string())
+        .parse()
+        .unwrap();
+    let chunker = StreamCDC::new(reader, min_chunk, avg_chunk, max_chunk);
 
     // Базовый вариант сначала сохраняет все чанки, а затем отдельным проходом
     // вычисляет BLAKE3 по каждому сохранённому буферу.

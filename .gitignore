@@ -3,3 +3,8 @@
 /artifacts
 /perf.data
 /perf.data.*
+/batches_tests/
+/diff_chunk_sizes/
+/reports/
+/baseline-chunks-8-32-128.svg
+/fused-64kib-chunks-8-32-128.svg

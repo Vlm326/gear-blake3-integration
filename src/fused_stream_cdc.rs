@@ -223,7 +223,6 @@ fn cut_gear_with_blake3(
 }
 
 /// Сканирует один чанк, сохраняя порядок проверки кандидатов исходного FastCDC.
-/// BLAKE3 обновляется порциями по мере продвижения Gear-сканера.
 #[allow(clippy::too_many_arguments)]
 #[inline]
 fn cut_gear_arr_blake3(
@@ -238,6 +237,10 @@ fn cut_gear_arr_blake3(
     gear: &[u64; 256],
     gear_ls: &[u64; 256],
 ) -> (u64, usize, blake3::Hash) {
+    let blake3_batch: usize = std::env::var("BLAKE3_BATCH")
+        .unwrap_or_else(|_| "64".to_string())
+        .parse()
+        .unwrap();
     // Хешер и позиция уже переданных байтов нужны, чтобы порционные обновления
     // BLAKE3 шли строго последовательно и не включали байты следующего чанка.
     let mut blake_hasher = blake3::Hasher::new();
@@ -270,44 +273,40 @@ fn cut_gear_arr_blake3(
 
     // До среднего размера FastCDC применяет строгую маску mask_s.
     if scan_start < center {
-        if let Some(offset) = scan_region_with_blake_hasher(
-            src,
-            scan_start,
-            center,
-            &mut hash,
-            mask_s_ls,
-            mask_s,
-            gear,
-            gear_ls,
-            &mut blake_hasher,
-            &mut blake_fed_until,
+        if let Some(offset) = scan_region(
+            src, scan_start, center, &mut hash, mask_s_ls, mask_s, gear, gear_ls,
         ) {
             let digest =
                 finish_blake_hasher_at(src, offset, &mut blake_hasher, &mut blake_fed_until);
             return (hash, offset, digest);
         }
+        blake3_fed_until(
+            src,
+            &mut blake_hasher,
+            &mut blake_fed_until,
+            center,
+            blake3_batch,
+        );
         scan_start = center;
     }
 
     // После среднего размера используется более мягкая маска mask_l; диапазон
     // сканирования продолжается до конца доступного окна или max_size.
     if scan_start < end
-        && let Some(offset) = scan_region_with_blake_hasher(
-            src,
-            scan_start,
-            end,
-            &mut hash,
-            mask_l_ls,
-            mask_l,
-            gear,
-            gear_ls,
-            &mut blake_hasher,
-            &mut blake_fed_until,
+        && let Some(offset) = scan_region(
+            src, scan_start, end, &mut hash, mask_l_ls, mask_l, gear, gear_ls,
         )
     {
         let digest = finish_blake_hasher_at(src, offset, &mut blake_hasher, &mut blake_fed_until);
         return (hash, offset, digest);
     }
+    blake3_fed_until(
+        src,
+        &mut blake_hasher,
+        &mut blake_fed_until,
+        end,
+        blake3_batch,
+    );
 
     // Если Gear не нашёл кандидата, FastCDC принудительно завершает чанк на
     // максимальной доступной длине. Нечётный последний байт участвует в Gear-
@@ -333,7 +332,7 @@ fn finish_blake_hasher_at(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn scan_region_with_blake_hasher(
+fn scan_region(
     source: &[u8],
     start: usize,
     end: usize,
@@ -342,8 +341,6 @@ fn scan_region_with_blake_hasher(
     mask: u64,
     gear: &[u64; 256],
     gear_ls: &[u64; 256],
-    blake_hasher: &mut blake3::Hasher,
-    blake_fed_until: &mut usize,
 ) -> Option<usize> {
     let mut offset = start;
     let (blocks, remainder) = source[start..end].as_chunks::<6>();
@@ -355,7 +352,6 @@ fn scan_region_with_blake_hasher(
             if current_hash & mask_ls == 0 {
                 *hash = current_hash;
                 let cut = offset + $delta;
-                feed_blake3_progress(source, blake_hasher, blake_fed_until, cut);
                 return Some(cut);
             }
             current_hash = current_hash.wrapping_add($second);
@@ -364,18 +360,8 @@ fn scan_region_with_blake_hasher(
                 // Смещение +1 сохраняет принятую FastCDC исключительную
                 // границу для кандидата на втором байте пары.
                 let cut = offset + $delta + 1;
-                feed_blake3_progress(source, blake_hasher, blake_fed_until, cut);
                 return Some(cut);
             }
-
-            // Пара не дала разреза: подаём уже пройденные байты блоками, а не
-            // вызываем BLAKE3 для каждого кандидата по отдельности.
-            feed_blake3_progress(
-                source,
-                blake_hasher,
-                blake_fed_until,
-                offset + $delta + 2,
-            );
         }};
     }
 
@@ -407,22 +393,17 @@ fn scan_region_with_blake_hasher(
     None
 }
 
-/// Обновляет хешер после достаточного продвижения сканера; порог в 64 байта
-/// уменьшает число вызовов update, а остаток добавляется при обнаружении разреза.
-fn feed_blake3_progress(
+#[inline]
+fn blake3_fed_until(
     source: &[u8],
-    hasher: &mut blake3::Hasher,
-    fed_until: &mut usize,
-    scanned_until: usize,
+    blake_hasher: &mut blake3::Hasher,
+    blake_fed_until: &mut usize,
+    cut: usize,
+    batch: usize,
 ) {
-    let blake3_batch: usize = std::env::var("BLAKE3_BATCH")
-        .unwrap_or_else(|_| "64".to_string())
-        .parse()
-        .unwrap();
-
-    if scanned_until - *fed_until >= blake3_batch {
-        hasher.update(&source[*fed_until..scanned_until]);
-        *fed_until = scanned_until;
+    if cut - *blake_fed_until >= batch {
+        blake_hasher.update(&source[*blake_fed_until..cut]);
+        *blake_fed_until = cut;
     }
 }
 

@@ -1,0 +1,19 @@
+
+ Performance counter stats for './target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png' (5 runs):
+
+     3 208 676 786      cycles:u                                                                ( +-  0,79% )
+    11 904 309 693      instructions:u                                                          ( +-  0,00% )
+       263 620 930      cache-references:u                                                      ( +-  0,98% )
+         6 401 677      cache-misses:u                                                          ( +-  8,75% )
+
+             1,908 +- 0,304 seconds time elapsed  ( +- 15,95% )
+
+
+ Performance counter stats for './target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png' (5 runs):
+
+     3 257 022 132      cycles:u                                                                ( +-  0,12% )
+     8 334 604 687      instructions:u                                                          ( +-  0,00% )
+       269 110 261      cache-references:u                                                      ( +-  0,66% )
+        18 060 809      cache-misses:u                                                          ( +-  0,89% )
+
+            1,3887 +- 0,0139 seconds time elapsed  ( +-  1,00% )

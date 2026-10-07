@@ -1,0 +1,8 @@
+| Mode | BLAKE3 batch, bytes | Runs | Elapsed time | Cycles (±%) | Instructions (±%) | Cache references (±%) | Cache misses (±%) | Command |
+|---|---|---|---|---|---|---|---|---|
+| baseline | 64 | 5 | 1.4231 s ± 0.0327 s (2.30%) | 3 446 822 474 (± 1.09%) | 8 182 179 446 (± 0.00%) | 269 375 651 (± 0.88%) | 26 725 306 (± 1.63%) | ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png |
+| fused | 64 | 5 | 0.8342 s ± 0.0034 s (0.40%) | 3 241 481 931 (± 0.35%) | 11 726 578 457 (± 0.00%) | 255 931 267 (± 0.52%) | 16 008 904 (± 3.13%) | ./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png |
+| baseline | 256 | 5 | 1.4101 s ± 0.0132 s (0.93%) | 3 422 285 963 (± 0.40%) | 8 182 177 716 (± 0.00%) | 270 657 204 (± 0.57%) | 27 742 127 (± 1.34%) | ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png |
+| fused | 256 | 5 | 0.8531 s ± 0.0054 s (0.63%) | 3 181 670 350 (± 0.39%) | 11 726 578 540 (± 0.00%) | 257 116 938 (± 0.62%) | 14 379 862 (± 2.00%) | ./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png |
+| baseline | 1024 | 5 | 1.4246 s ± 0.0101 s (0.71%) | 3 425 338 252 (± 0.63%) | 8 182 177 961 (± 0.00%) | 265 362 575 (± 0.54%) | 27 254 562 (± 2.30%) | ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png |
+| fused | 1024 | 5 | 0.8794 s ± 0.0177 s (2.01%) | 3 250 996 517 (± 1.00%) | 11 726 578 676 (± 0.00%) | 261 486 641 (± 0.61%) | 15 510 537 (± 5.42%) | ./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png |

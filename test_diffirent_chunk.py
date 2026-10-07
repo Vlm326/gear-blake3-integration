@@ -5,16 +5,16 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
-COMMAND_FUSED = "perf stat -r 10 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png"
+COMMAND_FUSED = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png"
 COMMAND_FUSED_FOR_HEATING = "./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png"
-COMMAND_BASELINE = "perf stat -r 10 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
+COMMAND_BASELINE = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
 COMMAND_BASELINE_FOR_HEATING = "./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
 batches = [64, 256, 1024, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024]
 
 chunk_sizes_list = [
     (16 * 1024, 64 * 1024, 256 * 1024),
     (8 * 1024, 32 * 1024, 128 * 1024),
-    (32 * 128, 128 * 1024, 512 * 1024),
+    (32 * 1024, 128 * 1024, 512 * 1024),
 ]
 
 
@@ -122,82 +122,84 @@ def parse_output(output: str) -> list[PerfResult]:
     return results
 
 
-def run_benches():
-    """
-    Run benchmarks for different batch sizes and chunk sizes.
-    """
+def run_benchmark(heating_command, benchmark_command, env):
+    subprocess.run(
+        heating_command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+        text=True,
+        check=True,
+    )
+    finished_process = subprocess.run(
+        benchmark_command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+        text=True,
+        check=True,
+    )
+    return parse_output(finished_process.stdout)[0]
 
-    with open("./batches_tests/results.txt", "a") as f:
+
+def write_result(log, mode, batch, chunk_sizes, result):
+    min_chunk, avg_chunk, max_chunk = chunk_sizes
+    log.write(
+        f"Mode: {mode}; batch={batch} bytes; "
+        f"chunks min/avg/max={min_chunk}/{avg_chunk}/{max_chunk} bytes\n"
+        f"cycles: {result.cycles}\n"
+        f"instructions: {result.instructions}\n"
+        f"cache_references: {result.cache_references}\n"
+        f"cache_misses: {result.cache_misses}\n"
+        f"elapsed_seconds: {result.elapsed_seconds}\n"
+        f"elapsed_spread_seconds: {result.elapsed_spread_seconds}\n"
+        f"elapsed_spread_percent: {result.elapsed_spread_percent}\n"
+        f"counter_spread_percent: {result.counter_spread_percent}\n\n"
+    )
+    log.flush()
+
+
+def run_benches():
+    """Run every batch/chunk combination and alternate which mode runs first."""
+    configuration_index = 0
+    with open("./batches_tests/results.txt", "a") as fused_log, open(
+        "./batches_tests/results_baseline.txt", "a"
+    ) as baseline_log:
         for batch in batches:
             for chunk_sizes in chunk_sizes_list:
+                print(f"Running batch={batch} with chunk sizes={chunk_sizes}")
                 min_chunk, avg_chunk, max_chunk = chunk_sizes
-                f.write(f"Running batch {batch} with chunk sizes: min={min_chunk}, avg={avg_chunk}, max={max_chunk}\n")
-                f.flush()
                 env = os.environ.copy()
-                """
-                        push env vars into rust code
-                    """
                 env["BLAKE3_BATCH"] = str(batch)
                 env["MIN_CHUNK_SIZE"] = str(min_chunk)
                 env["AVG_CHUNK_SIZE"] = str(avg_chunk)
                 env["MAX_CHUNK_SIZE"] = str(max_chunk)
 
-                """
-                        Run the benchmark for the current batch and chunk sizes.
-                        first of all running heating phase.
-                    """
-
-                heating = subprocess.run(
-                    COMMAND_FUSED_FOR_HEATING,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    env=env,
-                    text=True,
-                )
-
-                finished_process = subprocess.run(
-                    COMMAND_FUSED,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    env=env,
-                    text=True,
-                )
-                result = parse_output(finished_process.stdout)[0]
-
-                f.write(
-                    f"Batch {batch}:\n cycles: {result.cycles}\n instructions: {result.instructions}\n cache_references: {result.cache_references}\n cache_misses: {result.cache_misses}\n elapsed_seconds: {result.elapsed_seconds}\n elapsed_spread_seconds: {result.elapsed_spread_seconds}\n elapsed_spread_percent: {result.elapsed_spread_percent}\n counter_spread_percent: {result.counter_spread_percent}\n"
-                )
-                f.flush()
-
-                with open("./batches_tests/results_baseline.txt", "a") as f_base:
-                    heating = subprocess.run(
+                runs = [
+                    ("fused", COMMAND_FUSED_FOR_HEATING, COMMAND_FUSED, fused_log),
+                    (
+                        "baseline",
                         COMMAND_BASELINE_FOR_HEATING,
-                        shell=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        env=env,
-                        text=True,
-                    )
-
-                    finished_process = subprocess.run(
                         COMMAND_BASELINE,
-                        shell=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        env=env,
-                    )
-                    result = parse_output(finished_process.stdout)[0]
-                    f_base.write(
-                        f"Baseline:\n cycles: {result.cycles}\n instructions: {result.instructions}\n cache_references: {result.cache_references}\n cache_misses: {result.cache_misses}\n elapsed_seconds: {result.elapsed_seconds}\n elapsed_spread_seconds: {result.elapsed_spread_seconds}\n elapsed_spread_percent: {result.elapsed_spread_percent}\n counter_spread_percent: {result.counter_spread_percent}\n"
-                    )
-                    f_base.flush()
+                        baseline_log,
+                    ),
+                ]
+                if configuration_index % 2:
+                    runs.reverse()
+
+                for mode, heating_command, benchmark_command, log in runs:
+                    result = run_benchmark(heating_command, benchmark_command, env)
+                    write_result(log, mode, batch, chunk_sizes, result)
+
+                configuration_index += 1
 
 
 def main():
+    print("Starting benchmarks...")
     run_benches()
+    print("Benchmarks completed.")
 
 
 if __name__ == "__main__":

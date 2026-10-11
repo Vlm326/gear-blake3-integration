@@ -1,3 +1,4 @@
+mod analysys;
 mod baseline;
 mod fused;
 mod fused_stream_cdc;
@@ -17,6 +18,7 @@ use std::{
 enum Mode {
     Baseline,
     Fused,
+    Graph,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -39,10 +41,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             mode = match value.as_str() {
                 "baseline" => Mode::Baseline,
                 "fused" => Mode::Fused,
+                "build-graph" => Mode::Graph,
                 _ => {
                     return Err(io::Error::new(
                         io::ErrorKind::InvalidInput,
-                        format!("unknown mode {value:?}; expected baseline or fused"),
+                        format!("unknown mode {value:?}; expected baseline/fused/build-graph"),
                     )
                     .into());
                 }
@@ -70,12 +73,33 @@ fn main() -> Result<(), Box<dyn Error>> {
                 )
                 .into());
             }
-        } else {
+        
+        }
+        else {
             paths.push(PathBuf::from(arg));
         }
     }
 
     if paths.is_empty() {
+        match mode {
+            Mode::Graph => {
+                let root_path = std::env::current_dir()?;
+                let fused_path = format!("{}/graph_files/results.txt", root_path.display());
+                let baseline_path = format!("{}/graph_files/baseline_results.txt", root_path.display());
+                let (huynya, fused_path) = dbg!("fused_path: {}", fused_path);
+                let (zalupa, baseline_path) = dbg!("baseline_path: {}", baseline_path);
+
+                let fused_data = fs::read_to_string(fused_path)?;
+                let baseline_data = fs::read_to_string(baseline_path)?;
+                let fused_results = analysys::parser::parse_run_results(&fused_data)
+                    .map_err(|_| "can't find fused file")?;
+                let baseline_results = analysys::parser::parse_run_results(&baseline_data)
+                    .map_err(|_| "can't find baseline file")?;
+                analysys::graph_builder::build_graph(fused_results, baseline_results)?;
+                return Ok(());
+            }
+            _ => {}
+        }
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             "usage: hash_combination [--mode baseline|fused] [--iterations N] <file-or-directory> ...",
@@ -98,6 +122,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 match mode {
                     Mode::Baseline => baseline::process_file_base(reader)?,
                     Mode::Fused => fused::process_file_fused(reader)?,
+                    Mode::Graph => unreachable!(),
                 }
             }
         }

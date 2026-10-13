@@ -5,10 +5,10 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
-COMMAND_FUSED = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png"
-COMMAND_FUSED_FOR_HEATING = "./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png"
-COMMAND_BASELINE = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
-COMMAND_BASELINE_FOR_HEATING = "./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
+COMMAND_FUSED = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode fused --iterations 50 ./artifacts/inputs/wkiss_1.png"
+COMMAND_FUSED_FOR_HEATING = "./target/release/hash_combination --mode fused --iterations 50 ./artifacts/inputs/wkiss_1.png"
+COMMAND_BASELINE = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode baseline --iterations 50 ./artifacts/inputs/wkiss_1.png"
+COMMAND_BASELINE_FOR_HEATING = "./target/release/hash_combination --mode baseline --iterations 50 ./artifacts/inputs/wkiss_1.png"
 batches = [512, 1024, 8 * 1024, 64 * 1024, 128 * 1024]
 
 chunk_sizes_list = [
@@ -167,8 +167,8 @@ def write_result(log, mode, batch, chunk_sizes, result):
 def run_benches():
     """Run every batch/chunk combination and alternate which mode runs first."""
     configuration_index = 0
-    with open("./batches_tests/results.txt", "a") as fused_log, open(
-        "./batches_tests/results_baseline.txt", "a"
+    with open("./artifacts/benchmarks/batch_sweep/results.txt", "a") as fused_log, open(
+        "./artifacts/benchmarks/batch_sweep/results_baseline.txt", "a"
     ) as baseline_log:
         for batch in batches:
             for chunk_sizes in chunk_sizes_list:

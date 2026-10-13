@@ -1,10 +1,6 @@
 /target
-/test-files
-/artifacts
 /perf.data
 /perf.data.*
-/batches_tests/
-/diff_chunk_sizes/
-/reports/
-/baseline-chunks-8-32-128.svg
-/fused-64kib-chunks-8-32-128.svg
+/artifacts/inputs/kernels/
+/artifacts/benchmarks/batch_sweep/results.txt
+/artifacts/benchmarks/batch_sweep/results_baseline.txt

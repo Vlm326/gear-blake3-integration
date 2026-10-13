@@ -84,8 +84,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match mode {
             Mode::Graph => {
                 let root_path = std::env::current_dir()?;
-                let fused_path = format!("{}/graph_files/results.txt", root_path.display());
-                let baseline_path = format!("{}/graph_files/results_baseline.txt", root_path.display());
+                let graph_data_path = root_path.join("artifacts/benchmarks/chunk_sweep");
+                let fused_path = graph_data_path.join("results.txt");
+                let baseline_path = graph_data_path.join("results_baseline.txt");
 
                 let fused_data = fs::read_to_string(fused_path)?;
                 let baseline_data = fs::read_to_string(baseline_path)?;

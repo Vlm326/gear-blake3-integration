@@ -1,0 +1,600 @@
+Mode: fused; batch=64 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2552411053
+instructions: 8235625117
+cache_references: 267332904
+cache_misses: 14927889
+elapsed_seconds: 0.845
+elapsed_spread_seconds: 0.0117
+elapsed_spread_percent: 1.38
+counter_spread_percent: {'cycles': 0.32, 'instructions': 0.0, 'cache-references': 0.96, 'cache-misses': 3.64}
+
+Mode: fused; batch=64 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2517878571
+instructions: 8182135772
+cache_references: 271348619
+cache_misses: 30263316
+elapsed_seconds: 0.78814
+elapsed_spread_seconds: 0.00587
+elapsed_spread_percent: 0.74
+counter_spread_percent: {'cycles': 0.37, 'instructions': 0.0, 'cache-references': 0.43, 'cache-misses': 1.7}
+
+Mode: fused; batch=64 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2689347191
+instructions: 8424021620
+cache_references: 252371452
+cache_misses: 7013203
+elapsed_seconds: 0.8386
+elapsed_spread_seconds: 0.0131
+elapsed_spread_percent: 1.56
+counter_spread_percent: {'cycles': 1.42, 'instructions': 0.0, 'cache-references': 1.09, 'cache-misses': 6.67}
+
+Mode: fused; batch=64 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3019886273
+instructions: 8600252397
+cache_references: 267697229
+cache_misses: 6095094
+elapsed_seconds: 0.9295
+elapsed_spread_seconds: 0.0105
+elapsed_spread_percent: 1.13
+counter_spread_percent: {'cycles': 0.24, 'instructions': 0.0, 'cache-references': 0.42, 'cache-misses': 1.16}
+
+Mode: fused; batch=64 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2819034677
+instructions: 8786794452
+cache_references: 225947867
+cache_misses: 4631097
+elapsed_seconds: 0.83224
+elapsed_spread_seconds: 0.00233
+elapsed_spread_percent: 0.28
+counter_spread_percent: {'cycles': 0.11, 'instructions': 0.0, 'cache-references': 0.2, 'cache-misses': 1.08}
+
+Mode: fused; batch=64 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2644000158
+instructions: 8827704296
+cache_references: 179233475
+cache_misses: 4623021
+elapsed_seconds: 0.79225
+elapsed_spread_seconds: 0.0022
+elapsed_spread_percent: 0.28
+counter_spread_percent: {'cycles': 0.12, 'instructions': 0.0, 'cache-references': 0.22, 'cache-misses': 2.76}
+
+Mode: fused; batch=256 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2551354383
+instructions: 8235818943
+cache_references: 269836783
+cache_misses: 15371340
+elapsed_seconds: 0.80358
+elapsed_spread_seconds: 0.0011
+elapsed_spread_percent: 0.14
+counter_spread_percent: {'cycles': 0.12, 'instructions': 0.0, 'cache-references': 0.53, 'cache-misses': 2.77}
+
+Mode: fused; batch=256 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2530633681
+instructions: 8182209101
+cache_references: 271795275
+cache_misses: 30248901
+elapsed_seconds: 0.77081
+elapsed_spread_seconds: 0.0096
+elapsed_spread_percent: 1.25
+counter_spread_percent: {'cycles': 0.36, 'instructions': 0.0, 'cache-references': 0.27, 'cache-misses': 0.72}
+
+Mode: fused; batch=256 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2646251937
+instructions: 8424324059
+cache_references: 248722622
+cache_misses: 6351418
+elapsed_seconds: 0.80742
+elapsed_spread_seconds: 0.00769
+elapsed_spread_percent: 0.95
+counter_spread_percent: {'cycles': 0.24, 'instructions': 0.0, 'cache-references': 0.94, 'cache-misses': 5.16}
+
+Mode: fused; batch=256 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3010178806
+instructions: 8601841426
+cache_references: 265354882
+cache_misses: 6058659
+elapsed_seconds: 0.90074
+elapsed_spread_seconds: 0.00148
+elapsed_spread_percent: 0.16
+counter_spread_percent: {'cycles': 0.2, 'instructions': 0.0, 'cache-references': 0.46, 'cache-misses': 1.78}
+
+Mode: fused; batch=256 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2821461147
+instructions: 8787477939
+cache_references: 226562786
+cache_misses: 4969768
+elapsed_seconds: 0.84791
+elapsed_spread_seconds: 0.00779
+elapsed_spread_percent: 0.92
+counter_spread_percent: {'cycles': 0.12, 'instructions': 0.0, 'cache-references': 0.51, 'cache-misses': 4.33}
+
+Mode: fused; batch=256 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2643776159
+instructions: 8828170988
+cache_references: 176371538
+cache_misses: 3902010
+elapsed_seconds: 0.78622
+elapsed_spread_seconds: 0.00443
+elapsed_spread_percent: 0.56
+counter_spread_percent: {'cycles': 0.15, 'instructions': 0.0, 'cache-references': 0.37, 'cache-misses': 4.0}
+
+Mode: fused; batch=512 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2566055896
+instructions: 8235768806
+cache_references: 270317701
+cache_misses: 15753515
+elapsed_seconds: 0.77679
+elapsed_spread_seconds: 0.00431
+elapsed_spread_percent: 0.55
+counter_spread_percent: {'cycles': 0.14, 'instructions': 0.0, 'cache-references': 0.44, 'cache-misses': 3.01}
+
+Mode: fused; batch=512 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2523209927
+instructions: 8182208487
+cache_references: 270205222
+cache_misses: 31145162
+elapsed_seconds: 0.76317
+elapsed_spread_seconds: 0.0046
+elapsed_spread_percent: 0.6
+counter_spread_percent: {'cycles': 0.21, 'instructions': 0.0, 'cache-references': 0.25, 'cache-misses': 1.79}
+
+Mode: fused; batch=512 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2644989095
+instructions: 8424324584
+cache_references: 246362243
+cache_misses: 6248621
+elapsed_seconds: 0.79234
+elapsed_spread_seconds: 0.00381
+elapsed_spread_percent: 0.48
+counter_spread_percent: {'cycles': 0.16, 'instructions': 0.0, 'cache-references': 0.62, 'cache-misses': 3.06}
+
+Mode: fused; batch=512 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3026558636
+instructions: 8601663037
+cache_references: 265163772
+cache_misses: 6168408
+elapsed_seconds: 0.8907
+elapsed_spread_seconds: 0.0119
+elapsed_spread_percent: 1.33
+counter_spread_percent: {'cycles': 0.55, 'instructions': 0.0, 'cache-references': 1.24, 'cache-misses': 0.67}
+
+Mode: fused; batch=512 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2827980706
+instructions: 8787479336
+cache_references: 222789830
+cache_misses: 4782855
+elapsed_seconds: 0.83069
+elapsed_spread_seconds: 0.00354
+elapsed_spread_percent: 0.43
+counter_spread_percent: {'cycles': 0.15, 'instructions': 0.0, 'cache-references': 0.37, 'cache-misses': 1.88}
+
+Mode: fused; batch=512 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2638388857
+instructions: 8828170500
+cache_references: 177025819
+cache_misses: 4207035
+elapsed_seconds: 0.79183
+elapsed_spread_seconds: 0.00461
+elapsed_spread_percent: 0.58
+counter_spread_percent: {'cycles': 0.11, 'instructions': 0.0, 'cache-references': 0.22, 'cache-misses': 1.84}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2562155387
+instructions: 8235972277
+cache_references: 270014517
+cache_misses: 15576729
+elapsed_seconds: 0.78492
+elapsed_spread_seconds: 0.00628
+elapsed_spread_percent: 0.8
+counter_spread_percent: {'cycles': 0.09, 'instructions': 0.0, 'cache-references': 0.38, 'cache-misses': 2.02}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2518654895
+instructions: 8182299116
+cache_references: 269638286
+cache_misses: 30029239
+elapsed_seconds: 0.79312
+elapsed_spread_seconds: 0.0078
+elapsed_spread_percent: 0.98
+counter_spread_percent: {'cycles': 0.31, 'instructions': 0.0, 'cache-references': 0.19, 'cache-misses': 1.29}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2672544002
+instructions: 8424776300
+cache_references: 248284700
+cache_misses: 6702448
+elapsed_seconds: 0.8388
+elapsed_spread_seconds: 0.0148
+elapsed_spread_percent: 1.76
+counter_spread_percent: {'cycles': 1.07, 'instructions': 0.0, 'cache-references': 0.5, 'cache-misses': 4.5}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3009338141
+instructions: 8603131960
+cache_references: 264504500
+cache_misses: 6190411
+elapsed_seconds: 0.8944
+elapsed_spread_seconds: 0.00868
+elapsed_spread_percent: 0.97
+counter_spread_percent: {'cycles': 0.17, 'instructions': 0.0, 'cache-references': 0.13, 'cache-misses': 0.73}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2850726740
+instructions: 8788294945
+cache_references: 228587265
+cache_misses: 5030543
+elapsed_seconds: 0.84495
+elapsed_spread_seconds: 0.00528
+elapsed_spread_percent: 0.62
+counter_spread_percent: {'cycles': 0.2, 'instructions': 0.0, 'cache-references': 0.95, 'cache-misses': 1.84}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2645707999
+instructions: 8828584355
+cache_references: 178561703
+cache_misses: 4216321
+elapsed_seconds: 0.78257
+elapsed_spread_seconds: 0.00189
+elapsed_spread_percent: 0.24
+counter_spread_percent: {'cycles': 0.23, 'instructions': 0.0, 'cache-references': 1.53, 'cache-misses': 3.43}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2562348439
+instructions: 8235969696
+cache_references: 268336378
+cache_misses: 14513907
+elapsed_seconds: 0.77181
+elapsed_spread_seconds: 0.008
+elapsed_spread_percent: 1.04
+counter_spread_percent: {'cycles': 0.27, 'instructions': 0.0, 'cache-references': 0.48, 'cache-misses': 1.15}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2527033478
+instructions: 8182292476
+cache_references: 270698954
+cache_misses: 30660440
+elapsed_seconds: 0.75946
+elapsed_spread_seconds: 0.00581
+elapsed_spread_percent: 0.77
+counter_spread_percent: {'cycles': 0.16, 'instructions': 0.0, 'cache-references': 0.44, 'cache-misses': 0.75}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2636066082
+instructions: 8424775835
+cache_references: 247238556
+cache_misses: 6249006
+elapsed_seconds: 0.81428
+elapsed_spread_seconds: 0.00877
+elapsed_spread_percent: 1.08
+counter_spread_percent: {'cycles': 0.33, 'instructions': 0.0, 'cache-references': 0.48, 'cache-misses': 4.85}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3050109007
+instructions: 8603312342
+cache_references: 265689934
+cache_misses: 6094279
+elapsed_seconds: 0.90547
+elapsed_spread_seconds: 0.00984
+elapsed_spread_percent: 1.09
+counter_spread_percent: {'cycles': 1.08, 'instructions': 0.0, 'cache-references': 0.29, 'cache-misses': 1.3}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2832479989
+instructions: 8788395661
+cache_references: 224087031
+cache_misses: 4717532
+elapsed_seconds: 0.83744
+elapsed_spread_seconds: 0.00996
+elapsed_spread_percent: 1.19
+counter_spread_percent: {'cycles': 0.18, 'instructions': 0.0, 'cache-references': 0.27, 'cache-misses': 3.05}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2653158392
+instructions: 8828501583
+cache_references: 181320871
+cache_misses: 4239847
+elapsed_seconds: 0.79504
+elapsed_spread_seconds: 0.0087
+elapsed_spread_percent: 1.09
+counter_spread_percent: {'cycles': 0.24, 'instructions': 0.0, 'cache-references': 1.88, 'cache-misses': 7.34}
+
+Mode: fused; batch=16384 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2563261003
+instructions: 8236189912
+cache_references: 268939115
+cache_misses: 15145172
+elapsed_seconds: 0.78727
+elapsed_spread_seconds: 0.00711
+elapsed_spread_percent: 0.9
+counter_spread_percent: {'cycles': 0.57, 'instructions': 0.0, 'cache-references': 0.42, 'cache-misses': 1.69}
+
+Mode: fused; batch=16384 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2518279266
+instructions: 8182418311
+cache_references: 269089872
+cache_misses: 30030023
+elapsed_seconds: 0.76726
+elapsed_spread_seconds: 0.00791
+elapsed_spread_percent: 1.03
+counter_spread_percent: {'cycles': 0.19, 'instructions': 0.0, 'cache-references': 0.41, 'cache-misses': 0.76}
+
+Mode: fused; batch=16384 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2632827719
+instructions: 8425210041
+cache_references: 246432902
+cache_misses: 6417777
+elapsed_seconds: 0.78553
+elapsed_spread_seconds: 0.00689
+elapsed_spread_percent: 0.88
+counter_spread_percent: {'cycles': 0.1, 'instructions': 0.0, 'cache-references': 0.42, 'cache-misses': 3.23}
+
+Mode: fused; batch=16384 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3006452128
+instructions: 8582887636
+cache_references: 261141683
+cache_misses: 6162021
+elapsed_seconds: 0.86695
+elapsed_spread_seconds: 0.00362
+elapsed_spread_percent: 0.42
+counter_spread_percent: {'cycles': 0.12, 'instructions': 0.0, 'cache-references': 0.4, 'cache-misses': 3.42}
+
+Mode: fused; batch=16384 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2836848487
+instructions: 8789177749
+cache_references: 224711356
+cache_misses: 5058084
+elapsed_seconds: 0.82482
+elapsed_spread_seconds: 0.00213
+elapsed_spread_percent: 0.26
+counter_spread_percent: {'cycles': 0.21, 'instructions': 0.0, 'cache-references': 0.27, 'cache-misses': 2.36}
+
+Mode: fused; batch=16384 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2649742069
+instructions: 8829026183
+cache_references: 178489266
+cache_misses: 4454402
+elapsed_seconds: 0.78869
+elapsed_spread_seconds: 0.00344
+elapsed_spread_percent: 0.44
+counter_spread_percent: {'cycles': 0.12, 'instructions': 0.0, 'cache-references': 0.31, 'cache-misses': 5.24}
+
+Mode: fused; batch=32768 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2553512027
+instructions: 8236165256
+cache_references: 269509318
+cache_misses: 15310460
+elapsed_seconds: 0.78492
+elapsed_spread_seconds: 0.00957
+elapsed_spread_percent: 1.22
+counter_spread_percent: {'cycles': 0.16, 'instructions': 0.0, 'cache-references': 0.33, 'cache-misses': 2.46}
+
+Mode: fused; batch=32768 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2522479625
+instructions: 8182384265
+cache_references: 270135892
+cache_misses: 30833888
+elapsed_seconds: 0.76421
+elapsed_spread_seconds: 0.00719
+elapsed_spread_percent: 0.94
+counter_spread_percent: {'cycles': 0.15, 'instructions': 0.0, 'cache-references': 0.21, 'cache-misses': 1.04}
+
+Mode: fused; batch=32768 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2630057403
+instructions: 8425209908
+cache_references: 246220823
+cache_misses: 6062895
+elapsed_seconds: 0.80091
+elapsed_spread_seconds: 0.00757
+elapsed_spread_percent: 0.95
+counter_spread_percent: {'cycles': 0.17, 'instructions': 0.0, 'cache-references': 0.33, 'cache-misses': 2.7}
+
+Mode: fused; batch=32768 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3004644495
+instructions: 8582888054
+cache_references: 264037088
+cache_misses: 5991199
+elapsed_seconds: 0.88383
+elapsed_spread_seconds: 0.00968
+elapsed_spread_percent: 1.1
+counter_spread_percent: {'cycles': 0.23, 'instructions': 0.0, 'cache-references': 0.32, 'cache-misses': 0.88}
+
+Mode: fused; batch=32768 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2827221226
+instructions: 8778590036
+cache_references: 228450570
+cache_misses: 4811920
+elapsed_seconds: 0.82334
+elapsed_spread_seconds: 0.00158
+elapsed_spread_percent: 0.19
+counter_spread_percent: {'cycles': 0.12, 'instructions': 0.0, 'cache-references': 0.32, 'cache-misses': 1.62}
+
+Mode: fused; batch=32768 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2653274115
+instructions: 8829025900
+cache_references: 178856075
+cache_misses: 4091035
+elapsed_seconds: 0.78763
+elapsed_spread_seconds: 0.00612
+elapsed_spread_percent: 0.78
+counter_spread_percent: {'cycles': 0.2, 'instructions': 0.0, 'cache-references': 1.15, 'cache-misses': 2.97}
+
+Mode: fused; batch=65536 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2579581958
+instructions: 8236208129
+cache_references: 270193866
+cache_misses: 14994050
+elapsed_seconds: 0.78563
+elapsed_spread_seconds: 0.00541
+elapsed_spread_percent: 0.69
+counter_spread_percent: {'cycles': 0.25, 'instructions': 0.0, 'cache-references': 0.43, 'cache-misses': 1.26}
+
+Mode: fused; batch=65536 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2517258022
+instructions: 8182409177
+cache_references: 268448890
+cache_misses: 31272448
+elapsed_seconds: 0.79807
+elapsed_spread_seconds: 0.00174
+elapsed_spread_percent: 0.22
+counter_spread_percent: {'cycles': 0.14, 'instructions': 0.0, 'cache-references': 0.29, 'cache-misses': 1.18}
+
+Mode: fused; batch=65536 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2634736297
+instructions: 8419379469
+cache_references: 250122673
+cache_misses: 8205606
+elapsed_seconds: 0.81408
+elapsed_spread_seconds: 0.00595
+elapsed_spread_percent: 0.73
+counter_spread_percent: {'cycles': 0.23, 'instructions': 0.0, 'cache-references': 0.49, 'cache-misses': 5.67}
+
+Mode: fused; batch=65536 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3012996365
+instructions: 8583346134
+cache_references: 264945061
+cache_misses: 6045285
+elapsed_seconds: 0.87481
+elapsed_spread_seconds: 0.00605
+elapsed_spread_percent: 0.69
+counter_spread_percent: {'cycles': 0.1, 'instructions': 0.0, 'cache-references': 0.28, 'cache-misses': 1.91}
+
+Mode: fused; batch=65536 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2830013454
+instructions: 8778491266
+cache_references: 229436653
+cache_misses: 4863357
+elapsed_seconds: 0.82256
+elapsed_spread_seconds: 0.00147
+elapsed_spread_percent: 0.18
+counter_spread_percent: {'cycles': 0.23, 'instructions': 0.0, 'cache-references': 0.44, 'cache-misses': 3.33}
+
+Mode: fused; batch=65536 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2632627622
+instructions: 8822943390
+cache_references: 175448328
+cache_misses: 4018941
+elapsed_seconds: 0.78087
+elapsed_spread_seconds: 0.00135
+elapsed_spread_percent: 0.17
+counter_spread_percent: {'cycles': 0.04, 'instructions': 0.0, 'cache-references': 0.2, 'cache-misses': 1.8}
+
+Mode: fused; batch=131072 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2546266260
+instructions: 8233822109
+cache_references: 268002211
+cache_misses: 15517778
+elapsed_seconds: 0.76456
+elapsed_spread_seconds: 0.00276
+elapsed_spread_percent: 0.36
+counter_spread_percent: {'cycles': 0.16, 'instructions': 0.0, 'cache-references': 0.73, 'cache-misses': 2.21}
+
+Mode: fused; batch=131072 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2527421748
+instructions: 8182504471
+cache_references: 270359428
+cache_misses: 30268877
+elapsed_seconds: 0.77578
+elapsed_spread_seconds: 0.00831
+elapsed_spread_percent: 1.07
+counter_spread_percent: {'cycles': 0.2, 'instructions': 0.0, 'cache-references': 0.21, 'cache-misses': 1.58}
+
+Mode: fused; batch=131072 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2651979104
+instructions: 8419862335
+cache_references: 248784054
+cache_misses: 6519726
+elapsed_seconds: 0.79205
+elapsed_spread_seconds: 0.00355
+elapsed_spread_percent: 0.45
+counter_spread_percent: {'cycles': 0.29, 'instructions': 0.0, 'cache-references': 1.26, 'cache-misses': 2.15}
+
+Mode: fused; batch=131072 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3024446396
+instructions: 8584835819
+cache_references: 272721735
+cache_misses: 6135877
+elapsed_seconds: 0.88658
+elapsed_spread_seconds: 0.00502
+elapsed_spread_percent: 0.57
+counter_spread_percent: {'cycles': 0.51, 'instructions': 0.0, 'cache-references': 2.0, 'cache-misses': 0.62}
+
+Mode: fused; batch=131072 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2820742564
+instructions: 8779668331
+cache_references: 229648995
+cache_misses: 5062393
+elapsed_seconds: 0.83825
+elapsed_spread_seconds: 0.00892
+elapsed_spread_percent: 1.06
+counter_spread_percent: {'cycles': 0.21, 'instructions': 0.0, 'cache-references': 0.36, 'cache-misses': 2.27}
+
+Mode: fused; batch=131072 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2645661518
+instructions: 8823074549
+cache_references: 175977180
+cache_misses: 4290072
+elapsed_seconds: 0.7982
+elapsed_spread_seconds: 0.0103
+elapsed_spread_percent: 1.29
+counter_spread_percent: {'cycles': 0.15, 'instructions': 0.0, 'cache-references': 0.46, 'cache-misses': 3.47}
+
+Mode: fused; batch=262144 bytes; chunks min/avg/max=16384/65536/262144 bytes
+cycles: 2596546999
+instructions: 8233823036
+cache_references: 262666352
+cache_misses: 16732960
+elapsed_seconds: 0.8309
+elapsed_spread_seconds: 0.0143
+elapsed_spread_percent: 1.73
+counter_spread_percent: {'cycles': 1.08, 'instructions': 0.0, 'cache-references': 0.7, 'cache-misses': 4.37}
+
+Mode: fused; batch=262144 bytes; chunks min/avg/max=32768/131072/524288 bytes
+cycles: 2571231009
+instructions: 8181251698
+cache_references: 267302360
+cache_misses: 33506346
+elapsed_seconds: 0.8391
+elapsed_spread_seconds: 0.0132
+elapsed_spread_percent: 1.57
+counter_spread_percent: {'cycles': 0.63, 'instructions': 0.0, 'cache-references': 0.44, 'cache-misses': 5.4}
+
+Mode: fused; batch=262144 bytes; chunks min/avg/max=8192/32768/131072 bytes
+cycles: 2655563598
+instructions: 8419953207
+cache_references: 245386124
+cache_misses: 6799572
+elapsed_seconds: 0.8565
+elapsed_spread_seconds: 0.0158
+elapsed_spread_percent: 1.84
+counter_spread_percent: {'cycles': 0.2, 'instructions': 0.0, 'cache-references': 1.03, 'cache-misses': 5.41}
+
+Mode: fused; batch=262144 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3214258150
+instructions: 8584835941
+cache_references: 248192258
+cache_misses: 6156082
+elapsed_seconds: 1.0568
+elapsed_spread_seconds: 0.0375
+elapsed_spread_percent: 3.55
+counter_spread_percent: {'cycles': 3.35, 'instructions': 0.0, 'cache-references': 1.55, 'cache-misses': 2.99}
+
+Mode: fused; batch=262144 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2881682921
+instructions: 8779470212
+cache_references: 219696231
+cache_misses: 5029108
+elapsed_seconds: 0.9552
+elapsed_spread_seconds: 0.0175
+elapsed_spread_percent: 1.84
+counter_spread_percent: {'cycles': 0.4, 'instructions': 0.0, 'cache-references': 0.27, 'cache-misses': 2.64}
+
+Mode: fused; batch=262144 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2703060216
+instructions: 8823212616
+cache_references: 177434335
+cache_misses: 4566566
+elapsed_seconds: 0.8881
+elapsed_spread_seconds: 0.0144
+elapsed_spread_percent: 1.62
+counter_spread_percent: {'cycles': 1.45, 'instructions': 0.0, 'cache-references': 1.35, 'cache-misses': 6.18}
+

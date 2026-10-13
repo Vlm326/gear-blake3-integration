@@ -178,7 +178,7 @@ pub fn parse_run_result(input: &str) -> Result<ResultOfOneRun, Box<dyn Error>> {
     })
 }
 
-pub fn parse_run_results(input: &str) -> Result<Vec<ResultOfOneRun>, Box<dyn Error>> {
+pub fn parse_run_results(input: &str) -> Result<Vec<ResultOfOneRun>, Box<dyn std::error::Error>> {
     let mut results = Vec::new();
     let mut current_block = String::new();
 

@@ -21,7 +21,7 @@ enum Mode {
     Graph,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = env::args_os().skip(1);
     let mut mode = Mode::Baseline;
     let mut iterations = 1usize;
@@ -85,16 +85,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             Mode::Graph => {
                 let root_path = std::env::current_dir()?;
                 let fused_path = format!("{}/graph_files/results.txt", root_path.display());
-                let baseline_path = format!("{}/graph_files/baseline_results.txt", root_path.display());
-                let (huynya, fused_path) = dbg!("fused_path: {}", fused_path);
-                let (zalupa, baseline_path) = dbg!("baseline_path: {}", baseline_path);
+                let baseline_path = format!("{}/graph_files/results_baseline.txt", root_path.display());
 
                 let fused_data = fs::read_to_string(fused_path)?;
                 let baseline_data = fs::read_to_string(baseline_path)?;
-                let fused_results = analysys::parser::parse_run_results(&fused_data)
-                    .map_err(|_| "can't find fused file")?;
-                let baseline_results = analysys::parser::parse_run_results(&baseline_data)
-                    .map_err(|_| "can't find baseline file")?;
+                let fused_results = analysys::parser::parse_run_results(&fused_data)?;
+                let baseline_results = analysys::parser::parse_run_results(&baseline_data)?;
                 analysys::graph_builder::build_graph(fused_results, baseline_results)?;
                 return Ok(());
             }

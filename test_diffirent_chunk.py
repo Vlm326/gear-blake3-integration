@@ -9,18 +9,17 @@ COMMAND_FUSED = "perf stat -r 5 -e cycles,instructions,cache-references,cache-mi
 COMMAND_FUSED_FOR_HEATING = "./target/release/hash_combination --mode fused --iterations 50 ./test-files/wkiss_1.png"
 COMMAND_BASELINE = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
 COMMAND_BASELINE_FOR_HEATING = "./target/release/hash_combination --mode baseline --iterations 50 ./test-files/wkiss_1.png"
-batches = [8 * 1024]
+batches = [512, 1024, 8 * 1024, 64 * 1024, 128 * 1024]
 
-#chunk_sizes_list = [
-#    (16 * 1024, 64 * 1024, 256 * 1024),
-#    (32 * 1024, 128 * 1024, 512 * 1024),
-#    (8 * 1024, 32 * 1024, 128 * 1024),
-#    (4 * 1024, 8 * 1024, 64 * 1024),
-#    (4 * 1024, 16 * 1024, 64 * 1024),
-#    (4 * 1024, 32 * 1024, 64 * 1024),
-#]
+chunk_sizes_list = [
+    (16 * 1024, 64 * 1024, 256 * 1024),
+    (32 * 1024, 128 * 1024, 512 * 1024),
+    (8 * 1024, 32 * 1024, 128 * 1024),
+    (4 * 1024, 8 * 1024, 64 * 1024),
+    (4 * 1024, 16 * 1024, 64 * 1024),
+    (4 * 1024, 32 * 1024, 64 * 1024),
+]
 
-chunk_sizes_list = [(32 * 1024, 128 * 1024, 512 * 1024)]
 
 @dataclass(frozen=True)
 class PerfResult:

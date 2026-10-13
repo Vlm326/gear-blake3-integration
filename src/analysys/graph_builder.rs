@@ -1,7 +1,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     error::Error,
-    io,
+    fs, io,
 };
 
 use plotters::{
@@ -12,7 +12,7 @@ use plotters::{
 
 use crate::analysys::parser::{Mode, ResultOfOneRun};
 
-const OUTPUT_FILE: &str = "graph.svg";
+const OUTPUT_FILE: &str = "artifacts/charts/speedup.svg";
 const WIDTH: u32 = 1920;
 const LEGEND_WIDTH: u32 = 260;
 
@@ -43,6 +43,7 @@ pub fn build_graph(
 
     let max_cells = batches.len().max(chunk_settings.len());
     let height = 220u32.saturating_add((max_cells as u32).saturating_mul(48));
+    fs::create_dir_all("artifacts/charts")?;
     let root = SVGBackend::new(OUTPUT_FILE, (WIDTH, height)).into_drawing_area();
     root.fill(&WHITE)?;
     let (chart_area, legend_area) = root.split_horizontally(WIDTH - LEGEND_WIDTH);

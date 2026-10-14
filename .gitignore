@@ -1,6 +1,4 @@
 /target
-/test-files
-/artifacts
 /perf.data
 /perf.data.*
 /batches_tests/
@@ -9,3 +7,7 @@
 /baseline-chunks-8-32-128.svg
 /fused-64kib-chunks-8-32-128.svg
 /graph_files/
+/artifacts/inputs/kernels/
+/artifacts/inputs/wkiss_1.png
+/artifacts/benchmarks/batch_sweep/results.txt
+/artifacts/benchmarks/batch_sweep/results_baseline.txt

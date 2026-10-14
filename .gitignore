@@ -2,5 +2,6 @@
 /perf.data
 /perf.data.*
 /artifacts/inputs/kernels/
+/artifacts/inputs/wkiss_1.png
 /artifacts/benchmarks/batch_sweep/results.txt
 /artifacts/benchmarks/batch_sweep/results_baseline.txt

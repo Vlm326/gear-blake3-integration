@@ -2,17 +2,23 @@ mod analysys;
 mod baseline;
 mod fused;
 mod fused_stream_cdc;
+mod historical_fused;
 mod pub_utils;
 mod types;
 
 use std::{
-    env, error::Error, ffi::OsStr, fs, io::{self, Cursor}, ops::Add, path::PathBuf,
+    env,
+    ffi::OsStr,
+    fs,
+    io::{self, Cursor},
+    path::PathBuf,
 };
 
 #[derive(Clone, Copy)]
 enum Mode {
     Baseline,
     Fused,
+    Historical,
     Graph,
 }
 
@@ -30,17 +36,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .ok_or_else(|| {
                     io::Error::new(
                         io::ErrorKind::InvalidInput,
-                        "expected baseline or fused after --mode",
+                        "expected baseline, fused, historical, or build-graph after --mode",
                     )
                 })?;
             mode = match value.as_str() {
                 "baseline" => Mode::Baseline,
                 "fused" => Mode::Fused,
+                "historical" => Mode::Historical,
                 "build-graph" => Mode::Graph,
                 _ => {
                     return Err(io::Error::new(
                         io::ErrorKind::InvalidInput,
-                        format!("unknown mode {value:?}; expected baseline/fused/build-graph"),
+                        format!(
+                            "unknown mode {value:?}; expected baseline/fused/historical/build-graph"
+                        ),
                     )
                     .into());
                 }
@@ -68,9 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .into());
             }
-        
-        }
-        else {
+        } else {
             paths.push(PathBuf::from(arg));
         }
     }
@@ -94,7 +101,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
-            "usage: hash_combination [--mode baseline|fused] [--iterations N] <file-or-directory> ...",
+            "usage: hash_combination [--mode baseline|fused|historical] [--iterations N] <file-or-directory> ...",
         )
         .into());
     }
@@ -114,6 +121,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match mode {
                     Mode::Baseline => baseline::process_file_base(reader)?,
                     Mode::Fused => fused::process_file_fused(reader)?,
+                    Mode::Historical => historical_fused::process_file_historical(reader)?,
                     Mode::Graph => unreachable!(),
                 }
             }

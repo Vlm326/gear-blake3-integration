@@ -1,0 +1,59 @@
+Mode: baseline; batch=1024 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3298211643
+instructions: 8361484524
+cache_references: 320605132
+cache_misses: 19309882
+elapsed_seconds: 2.75470000
+elapsed_spread_seconds: 0.01020000
+elapsed_spread_percent: 0.3700
+counter_spread_percent: {'cycles': 0.3300, 'instructions': 0.0000, 'cache-references': 0.3600, 'cache-misses': 0.4900}
+
+Mode: baseline; batch=8192 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 3313560469
+instructions: 8361483057
+cache_references: 329299484
+cache_misses: 19105148
+elapsed_seconds: 2.76860000
+elapsed_spread_seconds: 0.01080000
+elapsed_spread_percent: 0.3900
+counter_spread_percent: {'cycles': 0.4900, 'instructions': 0.0000, 'cache-references': 1.7400, 'cache-misses': 0.5300}
+
+Mode: baseline; batch=1024 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 3081443609
+instructions: 8635867828
+cache_references: 260379754
+cache_misses: 18071568
+elapsed_seconds: 2.86300000
+elapsed_spread_seconds: 0.20200000
+elapsed_spread_percent: 7.0600
+counter_spread_percent: {'cycles': 0.4100, 'instructions': 0.0000, 'cache-references': 0.2000, 'cache-misses': 0.7700}
+
+Mode: baseline; batch=8192 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 3008231469
+instructions: 8635865662
+cache_references: 260798051
+cache_misses: 17581335
+elapsed_seconds: 2.45578000
+elapsed_spread_seconds: 0.00567000
+elapsed_spread_percent: 0.2300
+counter_spread_percent: {'cycles': 0.1700, 'instructions': 0.0000, 'cache-references': 0.3100, 'cache-misses': 0.4200}
+
+Mode: baseline; batch=1024 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2869982517
+instructions: 8740849049
+cache_references: 194942393
+cache_misses: 16961750
+elapsed_seconds: 2.50710000
+elapsed_spread_seconds: 0.01420000
+elapsed_spread_percent: 0.5600
+counter_spread_percent: {'cycles': 0.5500, 'instructions': 0.0000, 'cache-references': 1.0600, 'cache-misses': 0.5400}
+
+Mode: baseline; batch=8192 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2965114548
+instructions: 8740848055
+cache_references: 192748521
+cache_misses: 17438250
+elapsed_seconds: 2.59649000
+elapsed_spread_seconds: 0.00688000
+elapsed_spread_percent: 0.2700
+counter_spread_percent: {'cycles': 0.2600, 'instructions': 0.0000, 'cache-references': 0.4800, 'cache-misses': 1.0200}

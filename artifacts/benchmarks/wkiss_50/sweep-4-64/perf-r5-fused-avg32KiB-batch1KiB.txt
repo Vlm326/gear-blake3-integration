@@ -1,0 +1,12 @@
+# started on Fri Oct 16 14:34:05 2026
+
+
+ Performance counter stats for 'target/release/hash_combination --mode fused --iterations 50 artifacts/inputs/wkiss_1.png' (5 runs):
+
+        2576681108      cycles:u                                                                ( +-  0.41% )
+        8835686576      instructions:u                                                          ( +-  0.00% )
+         188499699      cache-references:u                                                      ( +-  0.50% )
+           4437965      cache-misses:u                                                          ( +-  3.98% )
+
+           1.36006 +- 0.00949 seconds time elapsed  ( +-  0.70% )
+

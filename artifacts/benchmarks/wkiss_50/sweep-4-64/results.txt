@@ -1,0 +1,59 @@
+Mode: fused; batch=1024 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 2942892539
+instructions: 8626983162
+cache_references: 283482280
+cache_misses: 6181809
+elapsed_seconds: 1.54071000
+elapsed_spread_seconds: 0.00364000
+elapsed_spread_percent: 0.2400
+counter_spread_percent: {'cycles': 0.3200, 'instructions': 0.0000, 'cache-references': 0.7600, 'cache-misses': 0.7100}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=4096/8192/65536 bytes
+cycles: 2948688354
+instructions: 8626982202
+cache_references: 283113380
+cache_misses: 6253891
+elapsed_seconds: 1.54778000
+elapsed_spread_seconds: 0.00612000
+elapsed_spread_percent: 0.4000
+counter_spread_percent: {'cycles': 0.2400, 'instructions': 0.0000, 'cache-references': 0.7600, 'cache-misses': 1.1300}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2747738550
+instructions: 8801485539
+cache_references: 233069284
+cache_misses: 4983586
+elapsed_seconds: 1.44326000
+elapsed_spread_seconds: 0.00763000
+elapsed_spread_percent: 0.5300
+counter_spread_percent: {'cycles': 0.4500, 'instructions': 0.0000, 'cache-references': 1.7800, 'cache-misses': 0.9600}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=4096/16384/65536 bytes
+cycles: 2711722378
+instructions: 8801484959
+cache_references: 221919839
+cache_misses: 4729576
+elapsed_seconds: 1.41768000
+elapsed_spread_seconds: 0.00117000
+elapsed_spread_percent: 0.0800
+counter_spread_percent: {'cycles': 0.1100, 'instructions': 0.0000, 'cache-references': 0.5800, 'cache-misses': 0.8500}
+
+Mode: fused; batch=1024 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2576681108
+instructions: 8835686576
+cache_references: 188499699
+cache_misses: 4437965
+elapsed_seconds: 1.36006000
+elapsed_spread_seconds: 0.00949000
+elapsed_spread_percent: 0.7000
+counter_spread_percent: {'cycles': 0.4100, 'instructions': 0.0000, 'cache-references': 0.5000, 'cache-misses': 3.9800}
+
+Mode: fused; batch=8192 bytes; chunks min/avg/max=4096/32768/65536 bytes
+cycles: 2558612164
+instructions: 8835692614
+cache_references: 187996290
+cache_misses: 3933554
+elapsed_seconds: 1.34024000
+elapsed_spread_seconds: 0.00535000
+elapsed_spread_percent: 0.4000
+counter_spread_percent: {'cycles': 0.3400, 'instructions': 0.0000, 'cache-references': 0.2600, 'cache-misses': 2.0600}

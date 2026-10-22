@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Разбор задания: FastCDC, BLAKE3 и кэш</title>
+  <style>
+    body { max-width: 960px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif; line-height: 1.6; color: #202124; }
+    a { color: #1756a9; }
+    code, pre { font-family: ui-monospace, monospace; }
+    code { background: #f2f4f7; padding: 2px 5px; border-radius: 4px; }
+    pre { background: #f2f4f7; padding: 18px; border-radius: 8px; overflow-x: auto; }
+    pre code { padding: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+    th, td { padding: 12px; border: 1px solid #d5dae1; text-align: left; vertical-align: top; }
+    th { background: #f2f4f7; }
+  </style>
+</head>
+<body>
+  <main>
+    <p>Ты правильно уловил цель: <strong>нужно разложить ускорение на составляющие и проверить, откуда оно берётся.</strong> Но по пересказу нельзя точно установить, какой именно эксперимент от тебя требуют.</p>
+
+    <p><code>black_box</code> не заменяет вычисление и не выполняет его отдельно. Он мешает компилятору удалить работу, результат которой иначе никому не нужен. Обычный пример:</p>
+
+    <pre><code class="language-rust">for _ in 0..iterations {
+    let digest = blake3::hash(std::hint::black_box(data));
+    std::hint::black_box(digest);
+}</code></pre>
+
+    <p>Здесь каждая итерация действительно вычисляет BLAKE3. Вход скрыт от оптимизатора, результат используется через <code>black_box</code>. Это стандартный приём для замеров, хотя абсолютных гарантий он не даёт. <a href="https://doc.rust-lang.org/std/hint/fn.black_box.html">Документация Rust</a>.</p>
+
+    <p><strong>В твоём проекте результат BLAKE3 уже передаётся в <code>black_box</code></strong> — например, в <a href="src/baseline.rs">baseline.rs:33</a>. Поэтому просто добавить ещё один <code>black_box</code> недостаточно, чтобы объяснить ускорение.</p>
+
+    <p>Я бы понимал задание как набор контрольных замеров:</p>
+
+    <table>
+      <thead>
+        <tr><th scope="col">Вариант</th><th scope="col">Что выясняем</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Только FastCDC, без BLAKE3</td><td>Сколько стоят поиск границ, копирование и работа с памятью</td></tr>
+        <tr><td>Только BLAKE3 на заранее подготовленных чанках</td><td>Сколько стоит само криптографическое хеширование</td></tr>
+        <tr><td>FastCDC → сразу BLAKE3 для каждого полученного чанка</td><td>Как работает обычная потоковая обработка</td></tr>
+        <tr><td>Текущий <code>fused</code></td><td>Даёт ли совмещение дополнительный выигрыш</td></tr>
+      </tbody>
+    </table>
+
+    <p>Для замера «только BLAKE3» чтение файла и поиск границ нужно выполнить <strong>до измеряемого участка</strong>. Внутри повторов оставить хеширование и <code>black_box</code>. Если удалить BLAKE3 и поставить вместо него <code>black_box(slice)</code>, получится другой эксперимент: стоимость хеширования исчезнет, а аналогичные обращения к данным не сохранятся.</p>
+
+    <p>В текущем сравнении есть существенный фактор: <a href="src/baseline.rs">baseline.rs:21</a> сначала <strong>сохраняет все чанки</strong>, затем хеширует их. <code>fused</code> обрабатывает чанки по одному. Поэтому наблюдаемое ускорение может включать эффект хранения всех чанков, выделений памяти и более позднего чтения данных. Потоковый вариант из таблицы поможет это проверить.</p>
+
+    <p>Про «где кэш-хиты» тоже отдельная задача: общие <code>cache-references</code> и <code>cache-misses</code> не показывают конкретные строки кода и уровни кэша. Для этого нужен профиль обращений к памяти, например <code>perf mem</code>; на твоей машине он сообщает доступность события <code>mem-ldst</code>. Такой профиль позволяет исследовать инструкции, адреса и уровни обслуживания выбранных обращений. <a href="https://man7.org/linux/man-pages/man1/perf-mem.1.html">Руководство perf mem</a>.</p>
+
+    <p>А «очистить резы» пока неоднозначно: очистить файлы результатов и очистить кэш процессора — разные действия. Сейчас скрипт <strong>дописывает</strong> результаты в старые файлы, поэтому новые серии стоит сохранять отдельно, чтобы не смешивать условия.</p>
+
+    <p>То есть твоя гипотеза про отдельные итерации BLAKE3 разумна. Главная поправка: нужны контрольные варианты, чтобы отличить стоимость BLAKE3 от стоимости FastCDC и организации памяти.</p>
+  </main>
+</body>
+</html>

@@ -60,15 +60,18 @@ cargo run --release -- --mode build-graph
 ├── artifacts/
 │   ├── benchmarks/
 │   │   ├── batch_sweep/
-│   │   └── chunk_sweep/
+│   │   ├── chunk_sweep/
+│   │   └── wkiss_50/
 │   ├── charts/
 │   │   └── archive/
 │   ├── flamegraphs/
 │   │   ├── historical/
 │   │   ├── iterations_1/
-│   │   └── iterations_10/
+│   │   ├── iterations_10/
+│   │   └── photo_50_times/
 │   ├── inputs/
 │   │   └── (локальные входные данные, исключённые из Git)
+│   ├── флеймграфы_для_показа/
 │   ├── profiles/
 │   │   └── perf/
 │   └── reports/ (только в ветке reports)

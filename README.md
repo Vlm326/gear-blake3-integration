@@ -38,6 +38,12 @@ cargo run --release -- --mode build-graph
 
 В этом режиме входной файл или каталог не указывается. Формат и примеры экспериментальных данных находятся в `artifacts/`.
 
+## Скрипты и материалы
+
+- [Скрипты замеров и профилирование](scripts/README.md) — запуск sweep и сохранение локальных профилей.
+- [Задание исследования](docs/TZ.md) и [заметки по контрольным замерам](docs/explanation.html).
+- [Материалы выступления 15.10.2026](artifacts/presentations/2026-10-15/README.md) — презентации, PDF, текст выступления и флеймграфы для показа.
+
 ## Используемые компоненты
 
 Для FastCDC используется submodule [`fastcdc-rs`](https://github.com/nlfiedler/fastcdc-rs), автор — Nathan Fiedler; лицензия — MIT. Уведомления об авторстве и файл лицензии сохранены в submodule `crates/fastcdc-rs`.
@@ -71,30 +77,25 @@ cargo run --release -- --mode build-graph
 │   │   └── photo_50_times/
 │   ├── inputs/
 │   │   └── (локальные входные данные, исключённые из Git)
-│   ├── флеймграфы_для_показа/
+│   ├── presentations/
+│   │   └── 2026-10-15/
+│   │       └── flamegraphs/
 │   ├── profiles/
-│   │   └── perf/
+│   │   ├── local/ (локальные профили, исключённые из Git)
+│   │   └── perf/ (сохранённые профили экспериментов)
 │   └── reports/ (только в ветке reports)
 │       └── initial_study/
 ├── crates/
 │   └── fastcdc-rs/ (submodule, MIT, Nathan Fiedler)
-│       ├── .claude/
-│       │   └── skills/
-│       │       ├── pr-review/
-│       │       └── regenerate-gear-tables/
-│       ├── .github/
-│       │   └── workflows/
-│       ├── benches/
-│       ├── examples/
-│       ├── src/
-│       │   ├── ronomon/
-│       │   ├── v2016/
-│       │   └── v2020/
-│       └── test/
-│           └── fixtures/
+├── docs/
+│   ├── TZ.md
+│   └── explanation.html
+├── scripts/
+│   ├── benchmark_chunk_sweep.py
+│   └── drafts/
 ├── src/
 │   └── analysys/
 └── .vscode/
 ```
 
-Папка `artifacts/reports/` находится только в ветке `reports`; остальной код и содержимое проекта синхронизируются между ветками `main` и `reports`.
+Папка `artifacts/reports/` находится только в ветке `reports`. Изменения структуры из `main` следует переносить в `reports` отдельно.

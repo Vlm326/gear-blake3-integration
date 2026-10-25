@@ -11,3 +11,7 @@
 /cachegrind.out.*
 /artifacts/benchmarks/batch_sweep/results.txt
 /artifacts/benchmarks/batch_sweep/results_baseline.txt
+/artifacts/profiles/local/
+__pycache__/
+*.py[cod]
+.ruff_cache/

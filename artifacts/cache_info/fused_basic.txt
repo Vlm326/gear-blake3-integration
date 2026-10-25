@@ -1,0 +1,12 @@
+# started on Sat Oct 24 17:41:59 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode fused --iterations 50 artifacts/inputs/base_photo.png' (5 runs):
+
+        3211427111      cycles:u                                                                ( +-  0.73% )
+        8899651264      instructions:u                                                          ( +-  0.00% )
+         270199892      cache-references:u                                                      ( +-  1.74% )
+           5737735      cache-misses:u                                                          ( +-  1.17% )
+
+           0.77354 +- 0.00848 seconds time elapsed  ( +-  1.10% )
+

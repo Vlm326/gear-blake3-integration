@@ -1,0 +1,12 @@
+# started on Sat Oct 24 17:42:56 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode baseline --iterations 50 artifacts/inputs/base_photo.png' (5 runs):
+
+        3657418571      cycles:u                                                                ( +-  2.04% )
+        8486394048      instructions:u                                                          ( +-  0.00% )
+         299145432      cache-references:u                                                      ( +-  2.89% )
+          18333235      cache-misses:u                                                          ( +-  2.24% )
+
+            1.4156 +- 0.0419 seconds time elapsed  ( +-  2.96% )
+

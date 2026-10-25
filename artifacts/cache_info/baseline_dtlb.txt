@@ -1,0 +1,10 @@
+# started on Sat Oct 24 17:43:05 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode baseline --iterations 50 artifacts/inputs/base_photo.png' (5 runs):
+
+           3790886      dTLB-loads:u                                                            ( +-  0.50% )
+           1195089      dTLB-load-misses:u                                                      ( +-  0.04% )
+
+            1.3724 +- 0.0273 seconds time elapsed  ( +-  1.99% )
+

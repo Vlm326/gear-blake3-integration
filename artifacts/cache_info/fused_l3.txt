@@ -1,0 +1,10 @@
+# started on Sat Oct 24 17:42:50 2026
+
+
+ Performance counter stats for 'system wide' (5 runs):
+
+          78315896      l3_lookup_state.all_l3_req_typs                                         ( +- 12.51% )
+          27943675      l3_comb_clstr_state.request_miss                                        ( +-  8.34% )
+
+            0.7964 +- 0.0146 seconds time elapsed  ( +-  1.84% )
+

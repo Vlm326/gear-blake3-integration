@@ -15,3 +15,12 @@
 __pycache__/
 *.py[cod]
 .ruff_cache/
+
+# Local benchmark datasets and intermediate cache-profiling files
+/kernels/
+/--
+/artifacts/cache_info/perfstat_l2.txt
+/artifacts/cache_info/runs/**/*.tsv
+/artifacts/cache_info/runs/**/*.log
+/artifacts/cache_info/runs/**/logs/
+/artifacts/cache_info/runs/**/working-tree.patch

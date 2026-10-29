@@ -1,0 +1,10 @@
+# started on Thu Oct 29 12:14:22 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode baseline --iterations 5 /home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.5-2026-10-29_12-12-32_kernels.tar' (5 runs):
+
+        5444737568      L1-dcache-loads:u                                                       ( +-  0.02% )
+         424169724      L1-dcache-load-misses:u                                                 ( +-  0.02% )
+
+            7.0067 +- 0.0191 seconds time elapsed  ( +-  0.27% )
+

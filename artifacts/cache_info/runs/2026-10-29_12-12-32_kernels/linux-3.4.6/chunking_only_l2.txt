@@ -1,0 +1,11 @@
+# started on Thu Oct 29 12:24:46 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 5 /home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.6-2026-10-29_12-12-32_kernels.tar' (5 runs):
+
+        3654416175      cycles:u                                                                ( +-  0.08% )
+           7527817      l2_cache_misses_from_dc_misses:u                                        ( +-  0.60% )
+         645315629      l2_fill_pending.l2_fill_busy:u                                          ( +-  0.64% )
+
+           4.78916 +- 0.00722 seconds time elapsed  ( +-  0.15% )
+

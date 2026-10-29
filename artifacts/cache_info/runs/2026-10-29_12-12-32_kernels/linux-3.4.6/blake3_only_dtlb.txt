@@ -1,0 +1,10 @@
+# started on Thu Oct 29 12:23:41 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode blake3_only --iterations 5 --chunk-map /home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/cache_info/runs/2026-10-29_12-12-32_kernels/linux-3.4.6/chunks.tsv /home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.6-2026-10-29_12-12-32_kernels.tar' (5 runs):
+
+            608871      dTLB-loads:u                                                            ( +-  1.64% )
+            570484      dTLB-load-misses:u                                                      ( +-  1.65% )
+
+           2.41998 +- 0.00446 seconds time elapsed  ( +-  0.18% )
+

@@ -1,5 +1,7 @@
 # Артефакты экспериментов
 
+- [`cache_info/`](cache_info/README.md) — исследования кэшей и DTLB, исходные perf-отчёты и сводные таблицы.
+- [`presentations/2026-10-29/`](presentations/2026-10-29/README.md) — презентация и текст выступления по результатам на ядрах Linux.
 - `inputs/` — локальные входные файлы; эта папка не публикуется в Git.
 - `benchmarks/batch_sweep/` — результаты прогонов с разными BLAKE3 batch.
 - `benchmarks/chunk_sweep/` — результаты по размерам чанков; отсюда `--mode build-graph` читает данные.

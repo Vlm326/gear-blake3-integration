@@ -1,0 +1,11 @@
+# started on Thu Oct 29 12:30:35 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode fused --iterations 5 /home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.7-2026-10-29_12-12-32_kernels.tar' (5 runs):
+
+        6614889261      cycles:u                                                                ( +-  0.52% )
+           7409419      l2_cache_misses_from_dc_misses:u                                        ( +-  3.19% )
+         622826658      l2_fill_pending.l2_fill_busy:u                                          ( +-  5.11% )
+
+            4.1753 +- 0.0362 seconds time elapsed  ( +-  0.87% )
+

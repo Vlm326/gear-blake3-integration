@@ -1,0 +1,51 @@
+{
+  "iterations": 5,
+  "repeats": 5,
+  "environment": {
+    "LC_ALL": "C",
+    "BLAKE3_BATCH": "8192",
+    "MIN_CHUNK_SIZE": "4096",
+    "AVG_CHUNK_SIZE": "10240",
+    "MAX_CHUNK_SIZE": "65536"
+  },
+  "datasets": {
+    "linux-3.4.5": {
+      "archive": "/home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.5-2026-10-29_12-12-32_kernels.tar",
+      "bytes": 472627200,
+      "sha256": "f951ee30bf7e29682b20eb40a3703fbfcfc64a01f5d99a1c97af918fa0d42d8d",
+      "map_sha256": "084c438ba9ded1ec7450b1aaccca954d2cbf807945aa6191de152ad380b22a80"
+    },
+    "linux-3.4.6": {
+      "archive": "/home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.6-2026-10-29_12-12-32_kernels.tar",
+      "bytes": 472637440,
+      "sha256": "237b775645ad392b04d54e501e9ac6a10dda5333c015d79f924f560b26e18374",
+      "map_sha256": "ceca3479d14fceb17ee74a1c27dc96a933d62298fb3a0fc119df9896820baba3"
+    },
+    "linux-3.4.7": {
+      "archive": "/home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.7-2026-10-29_12-12-32_kernels.tar",
+      "bytes": 472637440,
+      "sha256": "d786a2f7434dd5f75a86ac228d102d68d061dfe46344146f635d09e8c750148d",
+      "map_sha256": "4ad0cf990ddda2fcc1bf9bc2068bf2754598f735fd8a2317dd2fcea8aa3cbfe1"
+    }
+  },
+  "binary_sha256": "b7f172ac9c712db20a46bc7ef058c537b524eca8fcdda4048870beb7a8975d3e",
+  "commit": "58de1419c6f518483334f56e327f8e21501c6976\n",
+  "status": " M README.md\n M artifacts/cache_info/commands.md\n M src/main.rs\n?? --\n?? artifacts/cache_info/perfstat_l2.txt\n?? artifacts/cache_info/runs/\n?? kernels/\n?? scripts/benchmark_kernel_cache.py\n?? src/isolated.rs\n",
+  "machine": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 7730U with Radeon Graphics\nCPU family:                              25\nModel:                                   80\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                0\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      43%\nCPU max MHz:                             4547,9458\nCPU min MHz:                             410,9590\nBogoMIPS:                                3992,47\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "perf": "perf version 6.19.14-108.fc42.x86_64\n",
+  "rust": "rustc 1.95.0 (59807616e 2026-04-14)\n",
+  "source_sha256": {
+    "src/analysys/graph_builder.rs": "d43a6e1eca57499a78b683a70ff09024cc751999cf8eafcafb01860ae0411cbd",
+    "src/analysys/mod.rs": "ea5f8fc6ca2be90195aef17f47e4b7e6424e56efa1b5444d5346e74adbb53648",
+    "src/analysys/parser.rs": "0e5c4366be95a4010deaefd6e5b57b7862043822c1c6bc86b8f3293aa4bb3233",
+    "src/baseline.rs": "c13f3e6f24bd6d56434ba8076d2f41e083239f9d396a39111525a1e5e657c7c9",
+    "src/fused.rs": "e557ec3ebcea44ee7f57a085ae450a8cce3bbfc2d1fdd64a8db667a4aa4b5c24",
+    "src/fused_stream_cdc.rs": "1369433ff8b9e630562173aac4a3d9ebcd4be2ecb28ff942be81290f1043801b",
+    "src/historical_fused.rs": "1ec24361e557ea10999ff4d0a6e2ee8ae19bf56d689b1f5492ce0aaadf7b6549",
+    "src/isolated.rs": "68811f2012e5732e8d485f2966076e846afc4e3dc00fc828c31d5b28f9a868eb",
+    "src/main.rs": "cec0d8b77f8dd834301586bf09fcdc52d1b5b0471798f49bb95fd17e6908ec04",
+    "src/pub_utils.rs": "1fb91809cb0203bfb828e3f252a74ba7901f856948d8ae0c9546f847082c1a3f",
+    "src/types.rs": "b70b482351117edb170bb8ae7f961753a40e180bc588ea13808fc8e592b819c4"
+  },
+  "pilot_seconds": 4.328870281984564
+}

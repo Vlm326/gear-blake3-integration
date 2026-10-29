@@ -1,0 +1,12 @@
+# started on Thu Oct 29 12:12:45 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode baseline --iterations 5 /home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/inputs/linux-3.4.5-2026-10-29_12-12-32_kernels.tar' (5 runs):
+
+        7127798675      cycles:u                                                                ( +-  0.25% )
+       18223955285      instructions:u                                                          ( +-  0.00% )
+         572814397      cache-references:u                                                      ( +-  0.25% )
+          44319957      cache-misses:u                                                          ( +-  0.74% )
+
+            7.1386 +- 0.0141 seconds time elapsed  ( +-  0.20% )
+

@@ -1,0 +1,9 @@
+# started on Sun Oct 25 23:09:25 2026
+
+
+ Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode blake3_only --chunk-map artifacts/cache_info/runs/2026-10-25_23-09-17/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png' (5 runs):
+
+         489848688      L1-dcache-loads:u                                                       ( +-  0.03% )
+          18660707      L1-dcache-load-misses:u                                                 ( +-  0.08% )
+
+           0.40969 +- 0.00176 seconds time elapsed  ( +-  0.43% )

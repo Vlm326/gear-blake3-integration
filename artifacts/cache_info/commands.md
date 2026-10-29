@@ -1,4 +1,4 @@
-# Команды для сравнения baseline и fused
+# Команды для сравнения baseline, fused и отдельных этапов
 
 Вставляй команды по одной из корня репозитория. Каждая команда самостоятельная.
 Параметры одинаковые: CPU 3, 50 итераций, 5 повторов. AMD-события проверены на Ryzen 7 7730U.
@@ -98,6 +98,103 @@ env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUN
 sudo env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -a -r 5 -e '{l3_lookup_state.all_l3_req_typs,l3_comb_clstr_state.request_miss}' -o artifacts/cache_info/baseline_l3.txt -- taskset -c 3 ./target/release/hash_combination --mode baseline --iterations 50 artifacts/inputs/base_photo.png
 ```
 
+# Подготовка границ для blake3_only
+
+Выполни один раз до замеров. Используются те же размеры чанков, что в остальных
+командах. Границы сохраняются отдельно, хеши не вычисляются. Существующая карта
+не перезаписывается: для повторной подготовки выбери новый путь или заранее
+удали старую. Пересоздавай карту при изменении входа или параметров чанкинга.
+
+```bash
+env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/release/hash_combination --mode prepare_chunks --chunk-map /tmp/base_photo.chunks.tsv artifacts/inputs/base_photo.png
+```
+
+# chunking_only
+
+Только FastCDC со сбором всех чанков в память, как в baseline; BLAKE3 не вычисляется.
+
+## Общие метрики
+
+Такты, инструкции и generic-события обращений/промахов кэша; смысл последних зависит от CPU.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{cycles:u,instructions:u,cache-references:u,cache-misses:u}' -o artifacts/cache_info/chunking_only_basic.txt -- taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## Кэш данных L1
+
+Generic-события чтений и промахов L1 data cache.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{L1-dcache-loads:u,L1-dcache-load-misses:u}' -o artifacts/cache_info/chunking_only_l1.txt -- taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## TLB данных
+
+Generic-события обращений и промахов кэша трансляций адресов.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{dTLB-loads:u,dTLB-load-misses:u}' -o artifacts/cache_info/chunking_only_dtlb.txt -- taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## Кэш L2
+
+Промахи L2 после L1D и циклы с запросами в полёте; это не напрямую циклы простоя CPU.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{cycles:u,l2_cache_misses_from_dc_misses:u,l2_fill_pending.l2_fill_busy:u}' -o artifacts/cache_info/chunking_only_l2.txt -- taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## Общий кэш L3
+
+Запросы и промахи L3 всей системы, включая фон. env после sudo передаёт настройки программе.
+
+```bash
+sudo env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -a -r 5 -e '{l3_lookup_state.all_l3_req_typs,l3_comb_clstr_state.request_miss}' -o artifacts/cache_info/chunking_only_l3.txt -- taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png
+```
+# blake3_only
+
+Только BLAKE3 каждого среза по готовой карте, без FastCDC и копирования чанков. Карта и вход загружаются один раз; внешний perf включает загрузку и проверку карты. Размеры чанков берутся из карты, переменные окружения и batch их не меняют.
+
+## Общие метрики
+
+Такты, инструкции и generic-события обращений/промахов кэша; смысл последних зависит от CPU.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{cycles:u,instructions:u,cache-references:u,cache-misses:u}' -o artifacts/cache_info/blake3_only_basic.txt -- taskset -c 3 ./target/release/hash_combination --mode blake3_only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## Кэш данных L1
+
+Generic-события чтений и промахов L1 data cache.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{L1-dcache-loads:u,L1-dcache-load-misses:u}' -o artifacts/cache_info/blake3_only_l1.txt -- taskset -c 3 ./target/release/hash_combination --mode blake3_only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## TLB данных
+
+Generic-события обращений и промахов кэша трансляций адресов.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{dTLB-loads:u,dTLB-load-misses:u}' -o artifacts/cache_info/blake3_only_dtlb.txt -- taskset -c 3 ./target/release/hash_combination --mode blake3_only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## Кэш L2
+
+Промахи L2 после L1D и циклы с запросами в полёте; это не напрямую циклы простоя CPU.
+
+```bash
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -r 5 -e '{cycles:u,l2_cache_misses_from_dc_misses:u,l2_fill_pending.l2_fill_busy:u}' -o artifacts/cache_info/blake3_only_l2.txt -- taskset -c 3 ./target/release/hash_combination --mode blake3_only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
+```
+
+## Общий кэш L3
+
+Запросы и промахи L3 всей системы, включая фон. env после sudo передаёт настройки программе.
+
+```bash
+sudo env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 perf stat -a -r 5 -e '{l3_lookup_state.all_l3_req_typs,l3_comb_clstr_state.request_miss}' -o artifacts/cache_info/blake3_only_l3.txt -- taskset -c 3 ./target/release/hash_combination --mode blake3_only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
+```
 # Как сравнивать
 
 - Используй одну сборку и одинаковые входы. Желательно оставить CPU 2 (SMT-сосед CPU 3) без тяжёлой нагрузки и закрыть фоновые задачи.
@@ -124,3 +221,5 @@ stat -c %s artifacts/inputs/base_photo.png
 Главные показатели — время, циклы/байт и промахи/MiB; одна доля промахов не доказывает ускорение.
 Baseline сохраняет все чанки перед хэшированием, fused обрабатывает их потоком: результат включает различия в аллокациях и рабочем наборе.
 Для проверки зависимости от размера данных полезны также входы меньше и существенно больше L3 (на этой машине 16 MiB; текущий вход около 21 MiB).
+
+`chunking_only` включает аллокации и копирование чанков, а `blake3_only` читает срезы исходного буфера. Поэтому разности времён — ориентир, а не точное разложение времени baseline. Карта проверяется по размеру и границам, но не по содержимому входа; изменение файла при прежнем размере не обнаруживается.

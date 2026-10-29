@@ -22,5 +22,5 @@
 
 ## Исходный вывод `perf stat`
 
-- Baseline: [`perf-stat-r5-baseline-c.txt`](perf-stat-r5-baseline-c.txt)
-- Fused: [`perf-stat-r5-fused-c.txt`](perf-stat-r5-fused-c.txt)
+- Baseline: `perf-stat-r5-baseline-c.txt` (архивный источник: `perf-stat-r5-baseline-c.txt`)
+- Fused: `perf-stat-r5-fused-c.txt` (архивный источник: `perf-stat-r5-fused-c.txt`)

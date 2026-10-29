@@ -1,27 +1,25 @@
-# Артефакты экспериментов
+# Результаты исследований
 
-- [`cache_info/`](cache_info/README.md) — исследования кэшей и DTLB, исходные perf-отчёты и сводные таблицы.
-- [`presentations/2026-10-29/`](presentations/2026-10-29/README.md) — презентация и текст выступления по результатам на ядрах Linux.
-- `inputs/` — локальные входные файлы; эта папка не публикуется в Git.
-- `benchmarks/batch_sweep/` — результаты прогонов с разными BLAKE3 batch.
-- `benchmarks/chunk_sweep/` — результаты по размерам чанков; отсюда `--mode build-graph` читает данные.
-- `benchmarks/wkiss_50/` — повторные замеры и sweep для тестового изображения за 50 итераций.
-- `charts/speedup.svg` — актуальный график ускорения; предыдущие варианты — в `charts/archive/`.
-- `charts/speedup_4_64_r5.svg` — график повторного sweep 4/16/64 с пятью повторами.
-- `flamegraphs/iterations_1/` и `flamegraphs/iterations_10/` — flamegraph для одного и десяти проходов.
-- `flamegraphs/photo_50_times/` — профили baseline, fused и historical для 50 обработок изображения.
-- [`presentations/2026-10-15/`](presentations/2026-10-15/README.md) — презентации, PDF и заметки к выступлению; `flamegraphs/` внутри этой папки содержит растровые и SVG-копии для показа.
-- `flamegraphs/historical/` — профили предыдущих экспериментов.
-- `profiles/perf/` — исходные файлы `perf.data`.
-- `profiles/perf/*_wkiss_50.data` — исходные профили для серии `benchmarks/wkiss_50/`.
-- `profiles/local/` — временные локальные профили, исключённые из Git; `root-cleanup-2026-10-23/` содержит файлы, перенесённые из корня при уборке, а не дату их измерения.
-- `reports/` — сводки и отчёты экспериментов.
+В этом каталоге собраны итоговые материалы для чтения и выступлений.
 
-Каталог `reports/` присутствует только в ветке `reports`. Изменения структуры из `main` следует переносить в `reports` отдельно.
+- [Кэш-профиль и DTLB](cache_info/README.md): сравнение baseline/fused и отдельных этапов.
+- [Средние по трём ядрам Linux](cache_info/runs/2026-10-29_12-12-32_kernels/summary.md).
+- [Исследование batch](benchmarks/batch_sweep/summary.md) и [повторные замеры](benchmarks/wkiss_50/summary.md).
+- `charts/` — графики ускорения; `archive/` содержит прежние варианты графиков.
+- `flamegraphs/` — визуализации профилей baseline, fused и historical.
+- [Презентация 15.10.2026](presentations/2026-10-15/README.md).
+- [Презентация 29.10.2026 и текст выступления](presentations/2026-10-29/README.md).
 
-Лицензирование материалов:
+## Исходные данные
 
-- тексты в `reports/`, файлы `summary.md` в каталогах замеров, графики в `charts/` и flamegraph-визуализации в `flamegraphs/` — CC BY-SA 4.0;
-- исходные результаты замеров в `benchmarks/` (кроме `summary.md`) и файлы профилирования в `profiles/` — CC BY 4.0.
+Датасеты, сырые perf-отчёты, профили, карты чанков, метаданные и логи перенесены
+в `.local-research/2026-10-29-artifacts/` с сохранением структуры каталогов.
+Архив исключён из Git. Ранее закоммиченные замеры доступны в коммите `ed0d9ff`.
+Входы для новых прогонов нужно подготовить в `artifacts/inputs/`; старые входы
+можно восстановить из локального архива. Команды создают рабочие каталоги заново.
 
-SPDX-идентификаторы и ссылки на официальные условия CC BY-SA 4.0 и CC BY 4.0 приведены в `../LICENSES/`.
+Методика и команды: [docs/cache_profiling_commands.md](../docs/cache_profiling_commands.md).
+Запуск скриптов: [scripts/README.md](../scripts/README.md).
+
+Тексты выводов и графики — CC BY-SA 4.0; ранее опубликованные сырые измерения
+и профили — CC BY 4.0. Условия: [LICENSES](../LICENSES/).

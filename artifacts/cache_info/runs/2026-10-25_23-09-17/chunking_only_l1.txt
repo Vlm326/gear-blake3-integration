@@ -1,9 +1,0 @@
-# started on Sun Oct 25 23:09:27 2026
-
-
- Performance counter stats for 'taskset -c 3 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png' (5 runs):
-
-        2056053885      L1-dcache-loads:u                                                       ( +-  0.00% )
-         180393120      L1-dcache-load-misses:u                                                 ( +-  0.10% )
-
-           1.04764 +- 0.00343 seconds time elapsed  ( +-  0.33% )

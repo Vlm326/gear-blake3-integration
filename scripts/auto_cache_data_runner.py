@@ -1,6 +1,6 @@
 import subprocess
 
-with open("/home/vlm326/Documents/Projects/Rust/hash_combination/artifacts/cache_info/commands.md", "r") as f:
+with open("/home/vlm326/Documents/Projects/Rust/hash_combination/docs/cache_profiling_commands.md", "r") as f:
     for line in f:
         if line.startswith("#"):
             continue

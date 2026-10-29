@@ -1,7 +1,0 @@
-48/48 core reports complete; all expected events and elapsed times present.
-No not-counted/not-supported; counter running time >=99% where reported.
-Archive/map/binary/source SHA-256 verified after run.
-12/12 L3 reports validated and included in all three tables.
-All 60 measurement reports are present; L3 events and elapsed times available, 5 repeats each.
-L3 includes system-wide background activity and was measured separately by the user.
-Legacy parser/normalization/table checks passed. cargo test: 9 passed; cargo fmt --check passed.

@@ -74,7 +74,7 @@ env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/relea
 в размещении данных и состоянии кэша.
 
 Самостоятельные команды `perf stat` для всех четырёх режимов находятся в
-[artifacts/cache_info/commands.md](artifacts/cache_info/commands.md).
+[docs/cache_profiling_commands.md](docs/cache_profiling_commands.md).
 
 ## Построение графика
 
@@ -147,3 +147,5 @@ cargo run --release -- --mode build-graph
 ```
 
 Папка `artifacts/reports/` находится только в ветке `reports`. Изменения структуры из `main` следует переносить в `reports` отдельно.
+
+После уборки `artifacts/` содержит итоговые материалы. Сырые замеры и локальные входы сохранены вне него в игнорируемом `.local-research/2026-10-29-artifacts/`; для повторного запуска входы нужно восстановить в `artifacts/inputs/`.

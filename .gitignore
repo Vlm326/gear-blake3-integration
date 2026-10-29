@@ -24,3 +24,6 @@ __pycache__/
 /artifacts/cache_info/runs/**/*.log
 /artifacts/cache_info/runs/**/logs/
 /artifacts/cache_info/runs/**/working-tree.patch
+
+# Local raw research archive (excluded from published artifacts)
+/.local-research/

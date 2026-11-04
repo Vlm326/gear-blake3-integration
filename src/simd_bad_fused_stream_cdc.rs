@@ -4,6 +4,7 @@ use fastcdc::v2020::{
 };
 use std::{borrow::Cow, io::Read};
 
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -335,6 +336,7 @@ fn finish_blake_hasher_at(
 /// Проверяет четыре последовательных кандидата одним AVX2-сравнением.
 /// Состояния на первом байте каждой пары удвоены, как в скалярном FastCDC.
 #[allow(clippy::too_many_arguments)]
+#[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 unsafe fn scan_region_avx2(
     source: &[u8],
@@ -483,12 +485,12 @@ fn scan_region(
     gear: &[u64; 256],
     gear_ls: &[u64; 256],
 ) -> Option<usize> {
+    #[cfg(target_arch = "x86_64")]
     if is_x86_feature_detected!("avx2") {
         // SAFETY: поддержка AVX2 проверена перед вызовом.
-        unsafe { scan_region_avx2(source, start, end, hash, mask_ls, mask, gear, gear_ls) }
-    } else {
-        scan_region_scalar(source, start, end, hash, mask_ls, mask, gear, gear_ls)
+        return unsafe { scan_region_avx2(source, start, end, hash, mask_ls, mask, gear, gear_ls) };
     }
+    scan_region_scalar(source, start, end, hash, mask_ls, mask, gear, gear_ls)
 }
 
 #[inline]
@@ -508,12 +510,14 @@ fn blake3_fed_until(
 #[cfg(test)]
 mod tests {
     use super::StreamCDC as FusedStreamCDC;
+    #[cfg(target_arch = "x86_64")]
     use super::{scan_region_avx2, scan_region_scalar};
     use fastcdc::v2020::StreamCDC as ReferenceStreamCDC;
     use fastcdc::v2020::{Normalization, get_gear_with_seed, select_masks};
     use std::io::Cursor;
 
     #[test]
+    #[cfg(target_arch = "x86_64")]
     fn avx2_returns_first_matching_lane_and_its_hash() {
         if !is_x86_feature_detected!("avx2") {
             eprintln!("skipping AVX2 test: unsupported CPU");
@@ -550,6 +554,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_arch = "x86_64")]
     fn avx2_matches_scalar_across_regions_masks_and_initial_states() {
         if !is_x86_feature_detected!("avx2") {
             eprintln!("skipping AVX2 test: unsupported CPU");

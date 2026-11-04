@@ -25,7 +25,7 @@ Add unit tests beside the implementation under `#[cfg(test)]` modules. Name test
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short, imperative, conventional prefixes, for example `feat(cli): add historical interleaved hashing mode` and `docs: clarify licenses and benchmark modes`. Follow that pattern (`feat`, `fix`, `docs`, `chore`) with a concise subject. Pull requests should explain the behavior or measurement change, list validation commands, and include representative benchmark results or chart screenshots when results are central. Keep generated profiles and local input data out of unrelated code changes, and do not commit changes inside the FastCDC submodule unless the dependency itself is intentionally updated. 
+Use [Conventional Commits](https://www.conventionalcommits.org/) for every commit, with a concise imperative subject, for example `feat(cli): add historical interleaved hashing mode` or `docs: clarify licenses and benchmark modes`. Split work into atomic commits: each commit should contain one cohesive change, be reviewable on its own, and leave the repository in a consistent state. Keep unrelated changes in separate commits. Pull requests should explain the behavior or measurement change, list validation commands, and include representative benchmark results or chart screenshots when results are central. Keep generated profiles and local input data out of unrelated code changes, and do not commit changes inside the FastCDC submodule unless the dependency itself is intentionally updated.
 
 ## Data and Configuration
 

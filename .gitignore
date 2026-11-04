@@ -9,6 +9,7 @@
 /graph_files/
 /artifacts/inputs/
 /cachegrind.out.*
+/crates/rust-gearhash/
 /artifacts/benchmarks/batch_sweep/results.txt
 /artifacts/benchmarks/batch_sweep/results_baseline.txt
 /artifacts/profiles/local/

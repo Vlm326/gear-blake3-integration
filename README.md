@@ -4,6 +4,9 @@
 
 - `baseline`: сначала формирует чанки FastCDC, затем отдельно хеширует каждый чанк;
 - `fused`: вычисляет BLAKE3 одновременно с поиском границ чанков;
+- `simd`: AVX2 одновременно проверяет четыре кандидата, Gear-состояние между блоками вычисляется скалярно;
+- `simd-bad`: экспериментальный вариант, который хранит Gear-состояние в YMM и оказался медленнее в текущем замере;
+- `gearhash-simd`: экспериментальная реализация на локальной копии `gearhash`, требует AVX2 на x86_64 или NEON на aarch64;
 - `historical`: исторический interleaved-вариант из коммита `194611c`, проверяющий
   продвижение BLAKE3 после каждого кандидата Gear и обновляющий хешер порциями
   по 64 байта.
@@ -21,7 +24,7 @@
 Обработка файла или всех файлов в каталоге:
 
 ```sh
-cargo run --release -- [--mode baseline|fused|historical|chunking_only] [--iterations N] <файл-или-каталог>
+cargo run --release -- [--mode baseline|fused|simd|simd-bad|gearhash-simd|historical|chunking_only] [--iterations N] <файл-или-каталог>
 ```
 
 По умолчанию используется режим `baseline` и одна итерация. Например:
@@ -29,6 +32,9 @@ cargo run --release -- [--mode baseline|fused|historical|chunking_only] [--itera
 ```sh
 cargo run --release -- --mode baseline --iterations 10 ./путь/к/данным
 cargo run --release -- --mode fused --iterations 10 ./путь/к/данным
+cargo run --release -- --mode simd --iterations 10 ./путь/к/данным
+cargo run --release -- --mode simd-bad --iterations 10 ./путь/к/данным
+cargo run --release -- --mode gearhash-simd --iterations 10 ./путь/к/данным
 cargo run --release -- --mode historical --iterations 10 ./путь/к/данным
 ```
 
@@ -95,6 +101,8 @@ cargo run --release -- --mode build-graph
 ## Используемые компоненты
 
 Для FastCDC используется submodule [`fastcdc-rs`](https://github.com/nlfiedler/fastcdc-rs), автор — Nathan Fiedler; лицензия — MIT. Уведомления об авторстве и файл лицензии сохранены в submodule `crates/fastcdc-rs`.
+
+Экспериментальный режим `gearhash-simd` использует локальную копию `gearhash` 0.1.4 из `crates/gearhash/`. Исходный проект — [`srijs/rust-gearhash`](https://github.com/srijs/rust-gearhash); вендорированная копия сохраняет лицензии MIT и Apache-2.0 и уведомления об авторстве.
 
 ## Лицензии
 

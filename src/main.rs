@@ -2,9 +2,14 @@ mod analysys;
 mod baseline;
 mod fused;
 mod fused_stream_cdc;
+mod gearhash_simd;
 mod historical_fused;
 mod isolated;
 mod pub_utils;
+mod simd;
+mod simd_bad;
+mod simd_bad_fused_stream_cdc;
+mod simd_fused_stream_cdc;
 mod types;
 
 use std::{
@@ -19,6 +24,9 @@ use std::{
 enum Mode {
     Baseline,
     Fused,
+    Simd,
+    SimdBad,
+    GearhashSimd,
     Historical,
     ChunkingOnly,
     Blake3Only,
@@ -26,8 +34,7 @@ enum Mode {
     Graph,
 }
 
-const MODES: &str =
-    "baseline|fused|historical|chunking_only|blake3_only|prepare_chunks|build-graph";
+const MODES: &str = "baseline|fused|simd|simd-bad|gearhash-simd|historical|chunking_only|blake3_only|prepare_chunks|build-graph";
 
 #[derive(Debug)]
 struct Options {
@@ -58,6 +65,9 @@ fn parse_args(args: impl IntoIterator<Item = OsString>) -> io::Result<Options> {
             mode = match value.as_str() {
                 "baseline" => Mode::Baseline,
                 "fused" => Mode::Fused,
+                "simd" => Mode::Simd,
+                "simd-bad" => Mode::SimdBad,
+                "gearhash-simd" => Mode::GearhashSimd,
                 "historical" => Mode::Historical,
                 "build-graph" => Mode::Graph,
                 "chunking_only" => Mode::ChunkingOnly,
@@ -218,6 +228,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match mode {
                     Mode::Baseline => baseline::process_file_base(reader)?,
                     Mode::Fused => fused::process_file_fused(reader)?,
+                    Mode::Simd => simd::process_file_simd(reader)?,
+                    Mode::SimdBad => simd_bad::process_file_simd_bad(reader)?,
+                    Mode::GearhashSimd => gearhash_simd::process_file_gearhash_simd(reader)?,
                     Mode::Historical => historical_fused::process_file_historical(reader)?,
                     Mode::ChunkingOnly => isolated::process_chunking_only(reader)?,
                     Mode::Graph | Mode::Blake3Only | Mode::PrepareChunks => unreachable!(),
@@ -242,6 +255,9 @@ mod tests {
         for (name, expected) in [
             ("baseline", Mode::Baseline),
             ("fused", Mode::Fused),
+            ("simd", Mode::Simd),
+            ("simd-bad", Mode::SimdBad),
+            ("gearhash-simd", Mode::GearhashSimd),
             ("historical", Mode::Historical),
             ("chunking_only", Mode::ChunkingOnly),
         ] {
@@ -285,6 +301,8 @@ mod tests {
             ],
             vec!["--chunk-map", "map", "input"],
             vec!["--mode", "fused", "--chunk-map", "map", "input"],
+            vec!["--mode", "simd", "--chunk-map", "map", "input"],
+            vec!["--mode", "simd-bad", "--chunk-map", "map", "input"],
             vec!["--mode", "blake3_only", "--chunk-map"],
             vec!["--iterations", "0", "input"],
             vec!["--mode", "unknown", "input"],

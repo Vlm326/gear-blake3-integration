@@ -349,6 +349,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gearhash"
+version = "0.1.4"
+
+[[package]]
 name = "gif"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -364,6 +368,7 @@ version = "0.1.0"
 dependencies = [
  "blake3",
  "fastcdc",
+ "gearhash",
  "plotters",
 ]
 

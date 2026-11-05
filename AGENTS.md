@@ -1,32 +1,175 @@
-# Repository Guidelines
+# Руководство по репозиторию
 
-## Project Structure & Module Organization
+## Назначение проекта
 
-This is a Rust 2024 command-line project. The executable and application modules live in `src/`: `baseline.rs`, `fused.rs`, and `historical_fused.rs` implement the comparison modes, while `analysys/` parses benchmark output and builds graphs. The FastCDC dependency is a Git submodule at `crates/fastcdc-rs`; avoid editing it for application changes. `artifacts/` contains benchmark inputs, results, profiles, and charts. Some inputs are local-only and are not committed. There is no separate top-level `tests/` directory; focused Rust unit tests live beside their code.
+Rust 2024 CLI для исследования совместного выполнения FastCDC и BLAKE3.
+Главный вопрос — как организация конвейера чанкирования и хеширования влияет
+на время выполнения, инструкции и поведение кэшей. Ускорение имеет смысл только
+при одинаковых границах чанков, их содержимом и итоговых BLAKE3-хешах.
+Сохраняй эту эквивалентность и явно описывай различия в аллокациях, копировании
+данных, буферизации и методике измерения.
 
-Keep research documents in `docs/`, benchmark scripts in `scripts/`, and unfinished scripts in `scripts/drafts/`. Presentation decks, speaker notes, and display copies of flamegraphs belong together under `artifacts/presentations/<date>/`. Write temporary profiles to the ignored `artifacts/profiles/local/` directory rather than the repository root; keep curated profiles in `artifacts/profiles/perf/`.
+## Где искать команды и результаты бенчмарков
 
-## Build, Test, and Development Commands
+Сначала прочитай документы с готовыми командами, прежде чем составлять новый замер:
 
-- `cargo build` builds the debug executable; use `cargo build --release` for performance runs.
-- `cargo test` runs the project’s Rust unit tests.
-- `cargo fmt --check` checks standard Rust formatting; run `cargo fmt` before submitting changes.
-- `cargo run --release -- --mode fused --iterations 10 <file-or-directory>` runs a benchmark mode over a file or recursively collected directory. Modes are `baseline`, `fused`, and `historical`.
-- `cargo run --release --features reports --bin build-graph` reads the chunk-sweep results in `artifacts/benchmarks/chunk_sweep/` and writes a chart under `artifacts/charts/`.
-- `python3 scripts/benchmark_chunk_sweep.py` runs the batch/chunk sweep from the repository root; see `scripts/README.md` for prerequisites and profiling output paths. Scripts in `scripts/drafts/` are unfinished and are not supported entrypoints.
+- [docs/cache_profiling_commands.md](docs/cache_profiling_commands.md) — основные
+  самостоятельные команды `perf stat` для `baseline`, `fused`, `chunking_only`
+  и `blake3_only`: подготовка release-сборки и карты чанков, общие счётчики,
+  L1/L2/L3, dTLB, закрепление CPU, повторы и формулы сравнения результатов.
+- [scripts/README.md](scripts/README.md) — запуск sweep по batch/размерам чанков,
+  замеры на архивах ядер Linux, `perf record`, Cachegrind, требования к скриптам
+  и расположение результатов. Проверяй требования конкретного скрипта к Python
+  и локальным входам, а также дописывает ли он результаты или перезаписывает их.
+- Если локально есть `docs/riscv_pmu.md`, в нём описаны особенности PMU
+  и команды для RISC-V; файл может быть ещё не опубликован. AMD-события
+  из основного документа нельзя автоматически переносить на другую плату.
+- [artifacts/cache_info/README.md](artifacts/cache_info/README.md) — материалы
+  замеров кэшей; [artifacts/README.md](artifacts/README.md) — карта артефактов.
+- [README.md](README.md) — режимы CLI, параметры, формат карт чанков и построение графика.
+  Постановка исследования — [docs/TZ.md](docs/TZ.md).
 
-## Coding Style & Naming Conventions
+Все команды выполняются из корня репозитория. Для замеров сначала собери бинарник,
+затем запускай `perf` непосредственно над ним, чтобы сборка Cargo не попала в замер:
 
-Follow rustfmt defaults: four-space indentation, trailing commas in multiline constructs, and idiomatic Rust formatting. Use `snake_case` for modules, functions, and variables; use `UpperCamelCase` for types and enums. Keep benchmark and analysis logic separated from CLI argument handling. Preserve the three modes’ comparable behavior and document any intentional differences in output or measurement methodology.
+```sh
+cargo build --release --locked
 
-## Testing Guidelines
+env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 \
+  AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 \
+  perf stat -r 5 -e cycles:u,instructions:u -- \
+  taskset -c 3 ./target/release/hash_combination \
+  --mode fused --iterations 50 artifacts/inputs/base_photo.png
+```
 
-Add unit tests beside the implementation under `#[cfg(test)]` modules. Name tests for observable behavior, such as `fused_matches_baseline_chunks`. When changing chunking or hashing logic, cover chunk boundaries, chunk contents, and resulting hashes where applicable. Run `cargo test` and `cargo fmt --check` before submitting.
+Это пример для Linux: входной файл должен быть подготовлен локально, CPU 3 должен
+быть доступен процессу, аппаратные счётчики — доступны через `perf`. Подбирай CPU
+и поддерживаемые события под машину; не считай `<not supported>` или `<not counted>`
+нулевыми значениями. Не запускай длинные серии замеров ради проверки обычной правки.
 
-## Commit & Pull Request Guidelines
+## Структура и режимы
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) for every commit, with a concise imperative subject, for example `feat(cli): add historical interleaved hashing mode` or `docs: clarify licenses and benchmark modes`. Split work into atomic commits: each commit should contain one cohesive change, be reviewable on its own, and leave the repository in a consistent state. Keep unrelated changes in separate commits. Pull requests should explain the behavior or measurement change, list validation commands, and include representative benchmark results or chart screenshots when results are central. Keep generated profiles and local input data out of unrelated code changes, and do not commit changes inside the FastCDC submodule unless the dependency itself is intentionally updated.
+- `src/main.rs` — разбор CLI, загрузка входов и выбор режима. Каталог обходится
+  рекурсивно; каждый файл читается один раз, итерации обрабатывают буфер в памяти.
+- `baseline` (`src/baseline.rs`) — сначала собирает чанки FastCDC, затем хеширует их.
+- `fused` (`src/fused.rs`, `src/fused_stream_cdc.rs`) — совмещает поиск границ с BLAKE3.
+- `historical` (`src/historical_fused.rs`) — исторический interleaved-вариант.
+- `simd` и `simd-bad` — экспериментальные AVX2-сканеры в соответствующих модулях
+  `src/simd*.rs`; проверяют AVX2 во время выполнения и имеют скалярный fallback.
+- `gearhash-simd` (`src/gearhash_simd.rs`) — реализация через локальную копию
+  `gearhash`; требует AVX2 на x86_64 или NEON на aarch64.
+- `src/isolated.rs` — `chunking_only` (FastCDC с сохранением чанков без BLAKE3),
+  `prepare_chunks` (сохранение границ), `blake3_only` (хеширование срезов по карте).
+- В рабочем дереве могут быть дополнительные эксперименты, например
+  `fused-windowed` и варианты AVX2. Проверяй `src/main.rs`, README и `git status`:
+  локальные изменения не обязательно опубликованы в GitHub.
+- `crates/fastcdc-rs` — Git submodule. Не изменяй его для правок приложения.
+  Для свежего checkout выполни `git submodule update --init --recursive`.
+- `crates/gearhash` — вендорированная библиотека, а не submodule. Здесь находятся
+  SIMD-сканеры и собственные тесты; сохраняй лицензии и уведомления об авторстве.
+- `src/bin/build-graph.rs` и `src/analysys/` — отдельная утилита отчётов,
+  парсер результатов и SVG-график. Имя каталога `analysys` написано именно так.
+  Не возвращай зависимости визуализации в основной CLI.
 
-## Data and Configuration
+## Сборка, тесты и отчёты
 
-Benchmark timings depend on the input and machine. Record the mode, iteration count, and relevant chunk or batch settings with results. Check `.gitignore` before adding generated outputs; never add private or unlicensed input files.
+```sh
+cargo build --release --locked
+cargo test --locked
+cargo fmt --all -- --check
+cargo clippy --all-targets --locked -- -D warnings
+python3 scripts/ci_smoke.py
+```
+
+Smoke test требует готовую release-сборку, генерирует временный вход и проверяет
+режимы обработки и цикл карты чанков. Он не измеряет производительность.
+После изменения списка режимов синхронизируй CLI, тесты, smoke test и документацию.
+
+Отчёты включаются feature `reports`, а не отдельным профилем Cargo.
+По умолчанию собирается CLI чанкирования без Plotters. SVG-утилита не требует
+Fontconfig или FreeType:
+
+```sh
+cargo run --release --features reports --bin build-graph
+cargo test --features reports --bin build-graph --locked
+cargo clippy --all-targets --features reports --locked -- -D warnings
+```
+
+`build-graph` не принимает аргументов: читает `results.txt` и
+`results_baseline.txt` в `artifacts/benchmarks/chunk_sweep/`, пишет
+`artifacts/charts/speedup.svg`. Старый `--mode build-graph` больше не поддерживается.
+Feature `reports` и одноимённая Git-ветка — разные вещи: ветка хранит дополнительные
+отчётные материалы, feature включает инструмент в текущей ветке.
+
+CI описан в [.github/workflows/ci.yml](.github/workflows/ci.yml): push в `main`,
+все pull request и ручной запуск. Release-сборка, тесты и smoke test проверяются
+на Linux x86_64, Linux aarch64 и Windows x86_64; инструмент отчётов проверяется
+отдельно на Linux. CI не запускает бенчмарки и не генерирует графики или профили.
+
+## Методика измерения и настройки
+
+- Основные настройки: `MIN_CHUNK_SIZE`, `AVG_CHUNK_SIZE`, `MAX_CHUNK_SIZE`,
+  `BLAKE3_BATCH`. Проверяй ограничения конкретного режима; не предполагай,
+  что изменение batch имеет одинаковый смысл во всех реализациях.
+- Записывай вход и его размер, машину/архитектуру, commit и локальные изменения,
+  режим, размеры чанков, batch, число итераций, число повторов, CPU и события perf.
+  При сравнении используй одинаковую сборку, входы и параметры; учитывай прогрев,
+  фоновые процессы, порядок запусков и разброс.
+- Внешний `perf stat` измеряет весь процесс, включая загрузку файла, карты
+  и аллокации. CPU-кэши между итерациями не очищаются. `perf stat -r` повторяет
+  процесс; `--iterations` повторяет обработку внутри процесса.
+- Для `prepare_chunks` и `blake3_only` нужны ровно один обычный файл и `--chunk-map`.
+  Карта не перезаписывается; `prepare_chunks` допускает только одну итерацию.
+  Карта проверяется по размеру и границам, но не обнаруживает изменение содержимого
+  при прежнем размере файла. Пересоздавай её при изменении входа или настроек чанкинга.
+- `chunking_only` включает копирование и аллокации baseline, `blake3_only` хеширует
+  срезы исходного буфера. Сумма времён этих режимов не обязана равняться baseline.
+
+## Файлы, локальные данные и безопасность изменений
+
+Документы исследования храни в `docs/`, скрипты замеров — в `scripts/`, незавершённые
+скрипты — в `scripts/drafts/`; черновики не являются поддерживаемыми точками входа.
+Презентации, тексты выступлений и флеймграфы для показа размещай вместе в
+`artifacts/presentations/<date>/`.
+
+Временные профили записывай в игнорируемый `artifacts/profiles/local/<серия>/`,
+сохраняемые профили — в `artifacts/profiles/perf/`. Результаты серий и метаданные
+кэшей находятся в `artifacts/cache_info/runs/`, бенчмарков — в `artifacts/benchmarks/`.
+Не создавай `perf.data` и промежуточные отчёты в корне репозитория.
+
+`artifacts/inputs/`, `kernels/` и `.local-research/` содержат локальные данные,
+исключённые из Git. Часть прежних входов и сырых результатов архивирована в
+`.local-research/2026-10-29-artifacts/`; перед воспроизведением проверь наличие
+нужных файлов. Не добавляй приватные или нелицензированные входы в Git.
+Перед добавлением результатов проверь `.gitignore` и состав файлов.
+
+Перед правками проверь `git status` и существующий diff. Не включай чужие локальные
+эксперименты, входы, профили или результаты в коммит своей задачи; сохраняй их при
+подготовке коммитов и отправке на GitHub. Лицензии кода и артефактов описаны в README
+и `LICENSES/`; не распространяй одну лицензию автоматически на все материалы.
+
+## Стиль, тестирование и коммиты
+
+Следуй rustfmt: четыре пробела, `snake_case` для функций/модулей и `UpperCamelCase`
+для типов. Держи CLI, обработку данных и анализ результатов раздельно. Архитектурные
+интринсики защищай `#[cfg]`, вызовы — проверкой возможностей CPU; не добавляй
+глобальные `target-feature`, нарушающие переносимость обычной сборки.
+
+Unit-тесты расположены рядом с кодом под `#[cfg(test)]`; отдельного корневого
+`tests/` нет. При изменении чанкирования/хеширования проверяй границы, содержимое
+и дайджесты относительно FastCDC/baseline, включая края буферов, хвосты и ошибки
+чтения. Тесты не должны зависеть от локальных входов. При изменении вендорированного
+`gearhash` запускай также его соответствующие тесты через
+`cargo test --manifest-path crates/gearhash/Cargo.toml`.
+
+Перед сдачей изменений Rust запускай форматирование, тесты и строгий Clippy;
+для отчётов проверяй также feature `reports`. Для правок только документации
+проверяй команды, ссылки и diff; пересборка проекта не требуется.
+
+Используй Conventional Commits с коротким повелительным заголовком, например
+`ci: validate Rust builds across platforms` или `docs: clarify perf stat workflow`.
+Каждый коммит должен содержать одну связную правку и оставлять проект рабочим.
+В PR объясняй изменение поведения или методики измерения, указывай проверки;
+если вывод основан на производительности, прикладывай параметры, результаты
+и при необходимости графики. Не меняй FastCDC submodule без отдельной задачи
+на обновление зависимости.

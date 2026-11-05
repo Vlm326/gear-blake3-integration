@@ -77,8 +77,7 @@ fn parse_args(args: impl IntoIterator<Item = OsString>) -> io::Result<Options> {
                     return Err(io::Error::new(
                         io::ErrorKind::InvalidInput,
                         format!("unknown mode {value:?}; expected {MODES}"),
-                    )
-                    .into());
+                    ));
                 }
             };
         } else if arg == OsStr::new("--chunk-map") {
@@ -109,8 +108,7 @@ fn parse_args(args: impl IntoIterator<Item = OsString>) -> io::Result<Options> {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidInput,
                     "--iterations must be greater than zero",
-                )
-                .into());
+                ));
             }
         } else {
             paths.push(PathBuf::from(arg));
@@ -190,21 +188,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if paths.is_empty() {
-        match mode {
-            Mode::Graph => {
-                let root_path = std::env::current_dir()?;
-                let graph_data_path = root_path.join("artifacts/benchmarks/chunk_sweep");
-                let fused_path = graph_data_path.join("results.txt");
-                let baseline_path = graph_data_path.join("results_baseline.txt");
+        if mode == Mode::Graph {
+            let root_path = std::env::current_dir()?;
+            let graph_data_path = root_path.join("artifacts/benchmarks/chunk_sweep");
+            let fused_path = graph_data_path.join("results.txt");
+            let baseline_path = graph_data_path.join("results_baseline.txt");
 
-                let fused_data = fs::read_to_string(fused_path)?;
-                let baseline_data = fs::read_to_string(baseline_path)?;
-                let fused_results = analysys::parser::parse_run_results(&fused_data)?;
-                let baseline_results = analysys::parser::parse_run_results(&baseline_data)?;
-                analysys::graph_builder::build_graph(fused_results, baseline_results)?;
-                return Ok(());
-            }
-            _ => {}
+            let fused_data = fs::read_to_string(fused_path)?;
+            let baseline_data = fs::read_to_string(baseline_path)?;
+            let fused_results = analysys::parser::parse_run_results(&fused_data)?;
+            let baseline_results = analysys::parser::parse_run_results(&baseline_data)?;
+            analysys::graph_builder::build_graph(fused_results, baseline_results)?;
+            return Ok(());
         }
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,

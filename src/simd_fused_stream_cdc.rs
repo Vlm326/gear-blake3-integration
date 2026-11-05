@@ -178,7 +178,7 @@ impl<R: Read> StreamCDC<R> {
                     offset,
                     length: count,
                     data,
-                    blake_hash: blake_hash,
+                    blake_hash,
                 })
             }
         }

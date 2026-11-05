@@ -4,7 +4,7 @@ use fastcdc::v2020::{
 };
 use std::{borrow::Cow, io::Read};
 
-///
+/// A chunk and its Gear and BLAKE3 hashes.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct FusedChunkData {
     /// The gear hash value as of the end of the chunk.
@@ -176,7 +176,7 @@ impl<R: Read> StreamCDC<R> {
                     offset,
                     length: count,
                     data,
-                    blake_hash: blake_hash,
+                    blake_hash,
                 })
             }
         }

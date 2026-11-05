@@ -43,7 +43,9 @@ fn clean_line(line: &str) -> &str {
     line.trim()
 }
 
-fn parse_header(header: &str) -> Result<(Mode, usize, (usize, usize, usize)), Box<dyn Error>> {
+type RunHeader = (Mode, usize, (usize, usize, usize));
+
+fn parse_header(header: &str) -> Result<RunHeader, Box<dyn Error>> {
     let mut mode = None;
     let mut batch = None;
     let mut chunks = None;

@@ -44,8 +44,8 @@ AVX2 на x86_64 или NEON на aarch64. Архитектурные ветки
 глобальные `RUSTFLAGS` с `target-feature` не нужны.
 
 CI не собирает показатели производительности, не запускает скрипты бенчмарков
-и не создаёт графики, флеймграфы или профили. Режим `build-graph` в smoke test
-не включён: он читает результаты замеров и создаёт артефакты. Измерения
+и не создаёт графики, флеймграфы или профили. Утилита `build-graph` в smoke test
+не включена: он читает результаты замеров и создаёт артефакты. Измерения
 производительности по-прежнему выполняются локально с `perf`.
 
 ## Запуск
@@ -113,13 +113,18 @@ env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/relea
 
 ## Построение графика
 
-Режим `build-graph` сравнивает замеры `fused` и `baseline` для одинаковых конфигураций batch и размеров чанков. Он читает `artifacts/benchmarks/chunk_sweep/results.txt` и `results_baseline.txt`, вычисляет ускорение по медианному времени замеров и создаёт SVG-график `artifacts/charts/speedup.svg`:
+Отдельная утилита `build-graph` сравнивает замеры `fused` и `baseline` для одинаковых конфигураций batch и размеров чанков. Он читает `artifacts/benchmarks/chunk_sweep/results.txt` и `results_baseline.txt`, вычисляет ускорение по медианному времени замеров и создаёт SVG-график `artifacts/charts/speedup.svg`:
 
 ```sh
-cargo run --release -- --mode build-graph
+cargo run --release --features reports --bin build-graph
 ```
 
-В этом режиме входной файл или каталог не указывается. Формат и примеры экспериментальных данных находятся в `artifacts/`.
+Утилита не принимает аргументов. Обычные `cargo build`, `cargo test` и
+`cargo run` собирают только CLI чанкирования и хеширования: Plotters и анализ
+замеров подключаются исключительно через feature `reports` и отдельный бинарник.
+Для графика используется только SVG-backend Plotters без системных зависимостей
+Fontconfig и FreeType; текст SVG отображается шрифтами программы просмотра.
+Для проверки инструмента отчётов: `cargo test --features reports --bin build-graph`. Формат и примеры экспериментальных данных находятся в `artifacts/`.
 
 ## Скрипты и материалы
 

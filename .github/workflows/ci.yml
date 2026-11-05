@@ -48,3 +48,20 @@ jobs:
       - run: cargo test --release --locked
       - name: CLI smoke test
         run: python scripts/ci_smoke.py
+
+  reports:
+    name: Optional reporting tool
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --features reports --locked -- -D warnings
+      - run: cargo build --release --features reports --bin build-graph --locked
+      - run: cargo test --release --features reports --bin build-graph --locked

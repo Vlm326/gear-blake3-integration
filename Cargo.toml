@@ -3,12 +3,22 @@ name = "hash_combination"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+default-run = "hash_combination"
+
+[features]
+default = []
+reports = ["dep:plotters"]
+
+[[bin]]
+name = "build-graph"
+path = "src/bin/build-graph.rs"
+required-features = ["reports"]
 
 [dependencies]
 blake3 = "1.8.7"
 fastcdc = {path = "./crates/fastcdc-rs"}
 gearhash = {path = "./crates/gearhash"}
-plotters = "0.3.7"
+plotters = { version = "0.3.7", optional = true, default-features = false, features = ["svg_backend"] }
 
 [profile.release]
 debug = true

@@ -1,4 +1,3 @@
-mod analysys;
 mod baseline;
 mod fused;
 mod fused_stream_cdc;
@@ -31,10 +30,9 @@ enum Mode {
     ChunkingOnly,
     Blake3Only,
     PrepareChunks,
-    Graph,
 }
 
-const MODES: &str = "baseline|fused|simd|simd-bad|gearhash-simd|historical|chunking_only|blake3_only|prepare_chunks|build-graph";
+const MODES: &str = "baseline|fused|simd|simd-bad|gearhash-simd|historical|chunking_only|blake3_only|prepare_chunks";
 
 #[derive(Debug)]
 struct Options {
@@ -69,7 +67,6 @@ fn parse_args(args: impl IntoIterator<Item = OsString>) -> io::Result<Options> {
                 "simd-bad" => Mode::SimdBad,
                 "gearhash-simd" => Mode::GearhashSimd,
                 "historical" => Mode::Historical,
-                "build-graph" => Mode::Graph,
                 "chunking_only" => Mode::ChunkingOnly,
                 "blake3_only" => Mode::Blake3Only,
                 "prepare_chunks" => Mode::PrepareChunks,
@@ -134,7 +131,7 @@ fn parse_args(args: impl IntoIterator<Item = OsString>) -> io::Result<Options> {
             "prepare_chunks requires --iterations 1",
         ));
     }
-    if paths.is_empty() && mode != Mode::Graph {
+    if paths.is_empty() {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             format!(
@@ -187,27 +184,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    if paths.is_empty() {
-        if mode == Mode::Graph {
-            let root_path = std::env::current_dir()?;
-            let graph_data_path = root_path.join("artifacts/benchmarks/chunk_sweep");
-            let fused_path = graph_data_path.join("results.txt");
-            let baseline_path = graph_data_path.join("results_baseline.txt");
-
-            let fused_data = fs::read_to_string(fused_path)?;
-            let baseline_data = fs::read_to_string(baseline_path)?;
-            let fused_results = analysys::parser::parse_run_results(&fused_data)?;
-            let baseline_results = analysys::parser::parse_run_results(&baseline_data)?;
-            analysys::graph_builder::build_graph(fused_results, baseline_results)?;
-            return Ok(());
-        }
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "build-graph requires no input paths",
-        )
-        .into());
-    }
-
     for path in paths {
         let mut files = Vec::new();
         pub_utils::collect_files(&path, &mut files)?;
@@ -228,7 +204,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Mode::GearhashSimd => gearhash_simd::process_file_gearhash_simd(reader)?,
                     Mode::Historical => historical_fused::process_file_historical(reader)?,
                     Mode::ChunkingOnly => isolated::process_chunking_only(reader)?,
-                    Mode::Graph | Mode::Blake3Only | Mode::PrepareChunks => unreachable!(),
+                    Mode::Blake3Only | Mode::PrepareChunks => unreachable!(),
                 }
             }
         }
@@ -261,10 +237,7 @@ mod tests {
             assert_eq!(args.iterations, 2);
         }
         assert_eq!(options(&["input"]).unwrap().mode, Mode::Baseline);
-        assert_eq!(
-            options(&["--mode", "build-graph"]).unwrap().mode,
-            Mode::Graph
-        );
+        assert!(options(&["--mode", "build-graph"]).is_err());
         for (name, expected) in [
             ("prepare_chunks", Mode::PrepareChunks),
             ("blake3_only", Mode::Blake3Only),

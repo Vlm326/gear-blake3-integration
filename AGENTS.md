@@ -12,7 +12,7 @@ Keep research documents in `docs/`, benchmark scripts in `scripts/`, and unfinis
 - `cargo test` runs the project’s Rust unit tests.
 - `cargo fmt --check` checks standard Rust formatting; run `cargo fmt` before submitting changes.
 - `cargo run --release -- --mode fused --iterations 10 <file-or-directory>` runs a benchmark mode over a file or recursively collected directory. Modes are `baseline`, `fused`, and `historical`.
-- `cargo run --release -- --mode build-graph` reads the chunk-sweep results in `artifacts/benchmarks/chunk_sweep/` and writes a chart under `artifacts/charts/`.
+- `cargo run --release --features reports --bin build-graph` reads the chunk-sweep results in `artifacts/benchmarks/chunk_sweep/` and writes a chart under `artifacts/charts/`.
 - `python3 scripts/benchmark_chunk_sweep.py` runs the batch/chunk sweep from the repository root; see `scripts/README.md` for prerequisites and profiling output paths. Scripts in `scripts/drafts/` are unfinished and are not supported entrypoints.
 
 ## Coding Style & Naming Conventions

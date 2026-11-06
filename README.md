@@ -1,6 +1,6 @@
 <div align="center">
 
-# FastCDC + BLAKE3
+# Fuse3
 
 A Rust research harness for chunking and hashing pipelines
 

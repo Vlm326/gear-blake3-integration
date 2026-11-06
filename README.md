@@ -1,95 +1,107 @@
+<div align="center">
+
 # FastCDC + BLAKE3
 
-[English](README.md) | [Русский](README.ru.md)
+A Rust research harness for chunking and hashing pipelines
+
+**English** &nbsp; / &nbsp; [Русский](README.ru.md)
 
 [![CI](https://github.com/Vlm326/gear-blake3-integration/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Vlm326/gear-blake3-integration/actions/workflows/ci.yml)
 [![Rust 2024](https://img.shields.io/badge/Rust-2024-orange?logo=rust)](Cargo.toml)
 [![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows-blue)](.github/workflows/ci.yml)
 [![Code license: MIT](https://img.shields.io/badge/code_license-MIT-green)](LICENSE)
 
-A Rust 2024 CLI for studying how combining FastCDC chunking and BLAKE3 hashing affects execution time, instruction counts, and cache behavior. Comparisons require identical chunk boundaries, contents, and BLAKE3 digests.
+[Quick start](#quick-start) · [Modes](#modes) · [Benchmarks](#benchmarks) · [Documentation](#documentation)
 
-## Build and run
+</div>
 
-Use a Rust toolchain with Rust 2024 support. Run all commands from the repository root. FastCDC is a Git submodule; initialize it before building:
+FastCDC + BLAKE3 is a CLI for comparing ways to combine content-defined chunking with hashing. It studies how processing order, BLAKE3 update frequency, and SIMD boundary scanning affect execution time, instruction counts, and cache behavior.
+
+Valid comparisons require identical chunk boundaries, contents, and BLAKE3 digests. This project is a research harness; results depend on the input, configuration, architecture, and measurement procedure.
+
+## Quick start
+
+Requires a Rust toolchain supporting edition 2024 and Git. Run all commands from the repository root.
 
 ```sh
-git submodule update --init --recursive
+git clone --recurse-submodules https://github.com/Vlm326/gear-blake3-integration.git
+cd gear-blake3-integration
 cargo build --release --locked
+
 ./target/release/hash_combination --mode baseline --iterations 10 README.md
 ./target/release/hash_combination --mode fused-base --iterations 10 README.md
 ```
 
-On Windows, the executable is `target/release/hash_combination.exe`. The commands above use a file included in the repository to demonstrate the CLI; use your own representative data for performance measurements.
+For an existing checkout, run `git submodule update --init --recursive`. On Windows, use `target/release/hash_combination.exe`.
 
-```text
-hash_combination [--mode MODE] [--iterations N] <file-or-directory> ...
-```
-
-The default is `baseline` with one iteration. Directories are traversed recursively. Each file is read once, then processed from memory for every iteration.
+These commands demonstrate execution using a repository file. Use representative data for measurements. Each file is read once; iterations process the in-memory buffer. The CLI consumes digests internally rather than printing them.
 
 ## Modes
 
-| Mode | Behavior |
+| Mode | Processing strategy |
 | --- | --- |
-| `baseline` | Collect FastCDC chunks, then hash each chunk separately. |
-| `fused-base` | Scalar scanning; BLAKE3 updates at region or chunk boundaries. |
-| `fused-windowed` | Experimental alternating Gear/BLAKE3 windows bounded by `BLAKE3_BATCH`. |
-| `fused-simd-check` | Experimental AVX2 scanner checking four candidates together, with scalar Gear state updates. |
-| `fused-simd-expanded` | Expanded Gear state formulas with AVX2 candidate checks. |
-| `fused-simd-stripes` | Parallel strip scanning using the vendored `gearhash` library. |
-| `fused-interleaved` | Historical interleaved implementation checking BLAKE3 progress after every Gear candidate and updating in 64-byte portions. |
-| `chunking-only` | FastCDC with baseline chunk allocations and copies, without hashing. |
-| `prepare-chunks` | Save FastCDC boundaries for one input file. |
-| `blake3-only` | Hash slices of the original input using a saved chunk map. |
+| `baseline` | Collect all FastCDC chunks, then run a separate BLAKE3 pass. |
+| `fused-base` | Scalar scanning; update BLAKE3 at region or chunk boundaries. |
+| `fused-windowed` | Alternate scanning and BLAKE3 in bounded windows. |
+| `fused-interleaved` | Check BLAKE3 progress after each byte pair; fixed 64-byte threshold. |
+| `fused-simd-check` | Sequential Gear states with SIMD checks of four candidates. |
+| `fused-simd-expanded` | Expanded Gear state formulas with SIMD candidate checks. |
+| `fused-simd-stripes` | Parallel strip scanning using vendored `gearhash`. |
 
-`fused-simd-check` and `fused-simd-expanded` detect AVX2 at runtime and have scalar fallbacks. `fused-simd-stripes` requires AVX2 on x86_64 or NEON on aarch64. Global `target-feature` flags are unnecessary.
+`chunking-only`, `prepare-chunks`, and `blake3-only` isolate individual stages. See the [CLI reference](docs/cli.md) for parameters, CPU requirements, chunk maps, and SIMD variants.
 
-Chunk sizes are configured in bytes with `MIN_CHUNK_SIZE`, `AVG_CHUNK_SIZE`, and `MAX_CHUNK_SIZE`; defaults are 16384, 65536, and 262144. Use valid even FastCDC sizes with `min <= avg <= max`. `BLAKE3_BATCH` controls batching in implementations that use it; its meaning differs between modes.
+Default min/avg/max chunk sizes are 16/64/256 KiB, configured through `MIN_CHUNK_SIZE`, `AVG_CHUNK_SIZE`, and `MAX_CHUNK_SIZE`. `BLAKE3_BATCH` has mode-specific semantics: an update threshold and a bounded interleaving window represent different experiments.
 
-`fused-windowed` defaults to a window of 8192 bytes and requires a positive even batch. It retains chunk copies and stream-buffer shifts. It reads settings once per stream, while the original fused-base implementation reads batch per chunk. Reducing batch in `fused-base` is not equivalent to bounding windows in `fused-windowed`.
+## Benchmarks
 
-Experimental AVX2 options for `fused-simd-stripes`:
+### Reproduce a comparison
 
-- `--unroll 1|2|4|8`: choose the unroll factor; `1` selects the original scanner.
-- `--scanner original|control|expanded|grouped-check|combined`: compare sequential computation, unrolling, combined boundary checks, or both changes.
-- `--strip-size 128|256|512|1024 --strips 2|4`: set strip size and count together; their product is the SIMD window size (originally 256 × 4 bytes).
-
-These three option groups are mutually exclusive and require AVX2. Without them, architecture selection remains automatic. Short input slices use scalar tails, so scanner window experiments also depend on batch size. In `fused-simd-stripes`, BLAKE3 batch thresholds are checked after complete FastCDC regions, with the remaining bytes hashed at chunk boundaries; scanner windows do not trigger intermediate BLAKE3 updates. Allocation and copying differences must be accounted for when comparing modes.
-
-## Isolate chunking and hashing
-
-Choose an unused map path; an existing map is never overwritten:
+Build the release binary first. On Linux, install `perf` and `taskset` and enable access to the required counters. Choose an input file and a CPU available on your machine.
 
 ```sh
-./target/release/hash_combination --mode prepare-chunks --chunk-map /tmp/readme.chunks.tsv README.md
-./target/release/hash_combination --mode chunking-only --iterations 10 README.md
-./target/release/hash_combination --mode blake3-only --chunk-map /tmp/readme.chunks.tsv --iterations 10 README.md
+# Linux: choose a CPU available to this process.
+env LC_ALL=C BLAKE3_BATCH=8192 \
+  MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 \
+  perf stat -r 5 -e cycles:u,instructions:u -- \
+  taskset -c 3 ./target/release/hash_combination \
+  --mode fused-base --iterations 50 /path/to/input.bin
 ```
 
-On Windows, replace `/tmp/readme.chunks.tsv` with a writable local path. `prepare-chunks` and `blake3-only` require exactly one regular file and `--chunk-map`. Preparation allows only one iteration.
+Repeat with `--mode baseline` using the same settings. `perf stat -r` repeats the process; `--iterations` repeats processing within the process. External measurements include input loading and allocations; caches are not cleared between iterations.
 
-Maps are TSV: a `# hash_combination chunk-map v1` header, `file_size<TAB>bytes`, `chunk_sizes<TAB>min<TAB>avg<TAB>max`, then `offset<TAB>length` pairs. Loading checks file size, settings, and complete contiguous coverage. It does not detect changed content of the same size. Recreate the map when the input or chunking settings change. Chunk-size variables and batch do not affect `blake3-only`.
+Record input size and provenance, CPU/architecture, commit, local changes, configuration, execution order, and variance. Unavailable counters are not zero. All full processing modes retain chunk copies; baseline retains all chunks while fused variants release them individually. Isolated stage times need not add up to baseline time.
 
-`chunking-only` retains baseline allocations; `blake3-only` hashes original-buffer slices. Their times need not add up to baseline time.
+- [perf stat commands and comparison methodology](docs/cache_profiling_commands.md) (Russian).
+- [Batch and chunk-size sweep](scripts/benchmark_chunk_sweep.py) — requires a local input and `perf`; appends results.
+- [Linux kernel archive measurements](scripts/benchmark_kernel_cache.py) — requires Python 3.11+, GNU tar, `perf`, `taskset`, and local kernel trees.
+- [Input preparation, script usage, and output locations](scripts/README.md) (Russian).
 
-## Measurement and optional graphs
+### Published examples
 
-See [perf commands](docs/cache_profiling_commands.md), [measurement scripts](scripts/README.md), and the [research specification](docs/TZ.md). Build first, then run `perf` directly on the binary. Record the input, machine, commit and local changes, settings, iterations, repetitions, CPU, and supported events. External `perf stat` includes loading and allocations; caches are not cleared between iterations.
+The links below pin materials from the `reports` branch to a specific revision. They describe historical implementations and retain earlier mode names; their figures do not automatically apply to the current CLI.
 
-`main` contains source code, instructions, and scripts. Reports, presentations, benchmark results, charts, flamegraphs, profiles, and input datasets are excluded from this branch. Published research materials are kept separately in the Git branch `reports`; its contents may reflect an earlier experiment or code revision.
+| Material | Link |
+| --- | --- |
+| Batch sweep | [GitHub](https://github.com/Vlm326/gear-blake3-integration/blob/fc8dbec80636fd3ee444d6fa3c506dce16bcbee9/artifacts/benchmarks/batch_sweep/summary.md) |
+| Chunk-size comparison | [GitHub](https://github.com/Vlm326/gear-blake3-integration/blob/fc8dbec80636fd3ee444d6fa3c506dce16bcbee9/artifacts/reports/chunk_size_summary.md) |
+| Raw fused measurements | [GitHub](https://github.com/Vlm326/gear-blake3-integration/blob/fc8dbec80636fd3ee444d6fa3c506dce16bcbee9/artifacts/benchmarks/chunk_sweep/results.txt) |
+| Raw baseline measurements | [GitHub](https://github.com/Vlm326/gear-blake3-integration/blob/fc8dbec80636fd3ee444d6fa3c506dce16bcbee9/artifacts/benchmarks/chunk_sweep/results_baseline.txt) |
+| Speedup chart | [GitHub](https://github.com/Vlm326/gear-blake3-integration/blob/fc8dbec80636fd3ee444d6fa3c506dce16bcbee9/artifacts/charts/speedup.svg) |
+| Historical flamegraphs | [GitHub](https://github.com/Vlm326/gear-blake3-integration/tree/fc8dbec80636fd3ee444d6fa3c506dce16bcbee9/artifacts/flamegraphs/historical) |
 
-Local runs may create `artifacts/`; the entire directory is ignored in `main`. It is not part of a fresh checkout. Scripts document which inputs and output directories must be prepared. `.local-research/` and `kernels/` are also local and ignored.
+Store inputs, profiles, and new run results locally under `artifacts/`. Published materials are maintained separately in the [reports branch](https://github.com/Vlm326/gear-blake3-integration/tree/reports).
 
-The optional graph tool remains available:
+## Documentation
 
-```sh
-cargo run --release --locked --features reports --bin build-graph
-```
+| Document | Scope |
+| --- | --- |
+| [CLI reference](docs/cli.md) | Parameters, SIMD variants, chunk maps, and SVG reports. |
+| [Research specification](docs/TZ.md) | Objectives and comparison criteria (Russian). |
+| [Measurement guide](docs/cache_profiling_commands.md) | perf events, CPU affinity, and formulas (Russian). |
+| [Scripts](scripts/README.md) | Requirements, inputs, and run outputs (Russian). |
+| [Contributor guide](AGENTS.md) | Project structure and change requirements (Russian). |
 
-It takes no arguments. First supply local measurement files `results.txt` and `results_baseline.txt` in `artifacts/benchmarks/chunk_sweep/`; it writes `artifacts/charts/speedup.svg`. The batch sweep script instead writes to `artifacts/benchmarks/batch_sweep/`: copy the selected matching pair to `chunk_sweep/` before plotting. These inputs are not shipped in `main`. Plotters is enabled only by the Cargo feature `reports`, using its SVG backend without Fontconfig or FreeType. The Cargo feature and Git branch named `reports` are separate things.
-
-## Checks and CI
+## Validation
 
 ```sh
 cargo fmt --all -- --check
@@ -97,48 +109,12 @@ cargo test --locked
 cargo clippy --all-targets --locked -- -D warnings
 cargo build --release --locked
 python3 scripts/ci_smoke.py
-cargo test --features reports --bin build-graph --locked
-cargo clippy --all-targets --features reports --locked -- -D warnings
 ```
 
-The smoke test requires Python 3.9+ and a release build, creates temporary data, and checks CLI execution and the chunk-map round trip. Rust tests compare chunk boundaries, contents, and digests and validate maps without local datasets.
+The smoke test requires Python 3.9+, generates temporary data, and checks mode execution and the chunk-map round trip. Rust tests compare boundaries, contents, and digests against FastCDC. [CI](.github/workflows/ci.yml) covers Linux x86_64/aarch64 and Windows x86_64; benchmarks run separately.
 
-[CI](.github/workflows/ci.yml) runs on pushes to `main`, pull requests, and manual dispatch. It checks formatting, strict Clippy, release builds, tests, and the CLI on Linux x86_64, Linux aarch64, and Windows x86_64. Reporting-tool checks run separately on Linux. CI does not run benchmarks or generate research artifacts.
+The SVG tool uses the `reports` feature. Validate it with `cargo test --features reports --bin build-graph --locked` and `cargo clippy --all-targets --features reports --locked -- -D warnings`.
 
-## Repository layout
+## Licenses
 
-Tracked directories in `main` (generated and local files omitted):
-
-```text
-.
-├── README.md                  # English
-├── README.ru.md               # Russian
-├── AGENTS.md                  # Contributor instructions
-├── Cargo.toml
-├── Cargo.lock
-├── LICENSE
-├── LICENSES/                  # Creative Commons scope notices
-├── .github/workflows/ci.yml
-├── .vscode/                   # Editor settings
-├── crates/
-│   ├── fastcdc-rs/            # Git submodule
-│   └── gearhash/              # Vendored library
-├── docs/
-│   ├── TZ.md
-│   └── cache_profiling_commands.md
-├── scripts/                   # Measurements and CLI smoke test
-│   ├── README.md
-│   └── drafts/                # Unfinished, unsupported scripts
-└── src/
-    ├── main.rs                # CLI and input loading
-    ├── bin/build-graph.rs      # Optional graph tool
-    └── analysys/              # Result parsing and SVG output
-```
-
-## Components and licenses
-
-Project source code is [MIT](LICENSE). FastCDC uses Nathan Fiedler's [`fastcdc-rs`](https://github.com/nlfiedler/fastcdc-rs) submodule under MIT. Vendored [`gearhash`](https://github.com/srijs/rust-gearhash) 0.1.4 retains its MIT and Apache-2.0 licenses and copyright notices.
-
-Both README translations are covered by [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.md). The existing scope notices for research summaries, reports, and visualizations ([CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.md)) and raw benchmark results and profiles ([CC BY 4.0](LICENSES/CC-BY-4.0.md)) remain applicable to those materials when stored separately. Third-party code and materials retain their own licenses.
-
-Renamed modes: `fused` → `fused-base`, `historical` → `fused-interleaved`, `simd` → `fused-simd-check`, `simd-bad` → `fused-simd-expanded`, `gearhash-simd` → `fused-simd-stripes`. Utility mode names now use hyphens. `BLAKE3_BATCH` retains its existing mode-dependent behavior.
+Original code: [MIT](LICENSE). READMEs: [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.md). Research materials and raw results have separate license scopes documented in [LICENSES](LICENSES/). FastCDC (`crates/fastcdc-rs`) retains MIT; vendored `gearhash` retains MIT/Apache-2.0 and author notices.

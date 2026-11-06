@@ -11,6 +11,7 @@ struct Config {
     avg: usize,
     max: usize,
     window: usize,
+    batch: usize,
 }
 
 fn invalid(message: &str) -> io::Error {
@@ -43,6 +44,7 @@ impl Config {
             avg,
             max,
             window,
+            batch,
         })
     }
 
@@ -92,6 +94,9 @@ struct StreamCDC<R> {
     config: Config,
     table: gearhash::Table,
     masks: (u64, u64),
+    unroll: Option<gearhash::Avx2Unroll>,
+    experiment: Option<gearhash::Avx2Experiment>,
+    geometry: Option<gearhash::Avx2Window>,
 }
 
 impl<R: Read> StreamCDC<R> {
@@ -99,7 +104,7 @@ impl<R: Read> StreamCDC<R> {
         if !simd_available() {
             return Err(io::Error::new(
                 io::ErrorKind::Unsupported,
-                "gearhash-simd requires AVX2 on x86_64 or NEON on aarch64",
+                "fused-simd-stripes requires AVX2 on x86_64 or NEON on aarch64",
             ));
         }
         let (table, _) = get_gear_with_seed(0);
@@ -110,6 +115,9 @@ impl<R: Read> StreamCDC<R> {
             offset: 0,
             eof: false,
             config,
+            unroll: None,
+            experiment: None,
+            geometry: None,
             table: table.as_ref().try_into().expect("256 Gear entries"),
             masks: select_masks(config.avg, Normalization::Level1),
         })
@@ -143,7 +151,7 @@ impl<R: Read> StreamCDC<R> {
     fn cut(&self) -> (u64, usize, blake3::Hash) {
         let src = &self.buffer[..self.length];
         if src.len() <= self.config.min {
-            return (0, src.len(), blake3::hash(src));
+            return (0, src.len(), blake3::Hasher::new().update(src).finalize());
         }
         let mut gear = gearhash::Hasher::new(&self.table);
         let mut blake = blake3::Hasher::new();
@@ -151,10 +159,23 @@ impl<R: Read> StreamCDC<R> {
         let mut scan = self.config.min;
         let end = src.len() & !1;
         let center = self.config.avg.min(src.len()) & !1;
-        for (limit, mask) in [(center, self.masks.0), (end, self.masks.1)] {
+        for (region, (limit, mask)) in [(center, self.masks.0), (end, self.masks.1)]
+            .into_iter()
+            .enumerate()
+        {
+            let scanned = scan < limit;
             while scan < limit {
                 let stop = scan + self.config.window.min(limit - scan);
-                if let Some(n) = gear.next_match(&src[scan..stop], mask) {
+                if let Some(n) = if let Some(geometry) = self.geometry {
+                    gear.next_match_with_avx2_window(&src[scan..stop], mask, geometry)
+                } else if let Some(experiment) = self.experiment {
+                    gear.next_match_with_avx2_experiment(&src[scan..stop], mask, experiment)
+                } else {
+                    match self.unroll {
+                        Some(u) => gear.next_match_with_avx2_unroll(&src[scan..stop], mask, u),
+                        None => gear.next_match(&src[scan..stop], mask),
+                    }
+                } {
                     // gearhash includes the candidate byte; FastCDC cuts before it.
                     let cut = scan + n - 1;
                     let mut hash = gear.get_hash();
@@ -166,8 +187,15 @@ impl<R: Read> StreamCDC<R> {
                     return (hash, cut, blake.finalize());
                 }
                 scan = stop;
-                blake.update(&src[fed..scan]);
-                fed = scan;
+            }
+            // Match fused: scanning windows do not trigger BLAKE3 updates.
+            // Check the original batch threshold only after a complete region;
+            // a found boundary always hashes exactly the remaining chunk bytes.
+            // Fused also checks `end` for an odd tail whose even prefix needs
+            // no scanning (for example min=64 and a 65-byte remainder).
+            if (scanned || region == 1) && limit - fed >= self.config.batch {
+                blake.update(&src[fed..limit]);
+                fed = limit;
             }
         }
         if src.len() % 2 == 1 {
@@ -178,8 +206,28 @@ impl<R: Read> StreamCDC<R> {
     }
 }
 
-pub fn process_file_gearhash_simd<R: Read>(reader: R) -> io::Result<()> {
+pub fn process_file_fused_simd_stripes<R: Read>(
+    reader: R,
+    unroll: Option<gearhash::Avx2Unroll>,
+    experiment: Option<gearhash::Avx2Experiment>,
+    geometry: Option<gearhash::Avx2Window>,
+) -> io::Result<()> {
     let mut stream = StreamCDC::new(reader, Config::from_env()?)?;
+    if unroll.is_some() || experiment.is_some() || geometry.is_some() {
+        #[cfg(target_arch = "x86_64")]
+        let available = is_x86_feature_detected!("avx2");
+        #[cfg(not(target_arch = "x86_64"))]
+        let available = false;
+        if !available {
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "explicit AVX2 unroll requires AVX2",
+            ));
+        }
+    }
+    stream.unroll = unroll;
+    stream.experiment = experiment;
+    stream.geometry = geometry;
     let mut count = 0usize;
     let mut bytes = 0u64;
     while let Some(chunk) = stream.read_chunk()? {
@@ -202,7 +250,7 @@ mod tests {
             v2020::StreamCDC::new(Cursor::new(data), config.min, config.avg, config.max)
                 .map(Result::unwrap)
                 .collect();
-        let fused: Vec<_> = crate::fused_stream_cdc::StreamCDC::new(
+        let fused: Vec<_> = crate::fused_base::StreamCDC::new(
             Cursor::new(data),
             config.min,
             config.avg,
@@ -210,20 +258,40 @@ mod tests {
         )
         .map(Result::unwrap)
         .collect();
-        let mut actual = StreamCDC::new(Cursor::new(data), config).unwrap();
-        for (reference, fused) in expected.iter().zip(&fused) {
-            let chunk = actual.read_chunk().unwrap().unwrap();
-            assert_eq!(
-                (chunk.offset, chunk.data.len(), chunk.hash),
-                (reference.offset, reference.length, reference.hash)
-            );
-            assert_eq!(chunk.data, reference.data);
-            assert_eq!(chunk.digest, blake3::hash(&reference.data));
-            assert_eq!(chunk.digest, fused.blake_hash);
-            assert_eq!(chunk.data, fused.data);
+        let cases = [
+            (Some(gearhash::Avx2Unroll::One), None),
+            (Some(gearhash::Avx2Unroll::Two), None),
+            (Some(gearhash::Avx2Unroll::Four), None),
+            (Some(gearhash::Avx2Unroll::Eight), None),
+            (None, Some(gearhash::Avx2Experiment::Control)),
+            (None, Some(gearhash::Avx2Experiment::Unroll)),
+            (None, Some(gearhash::Avx2Experiment::Check)),
+        ];
+        let mut cases: Vec<_> = cases.into_iter().map(|(u, e)| (u, e, None)).collect();
+        for size in [128, 256, 512, 1024] {
+            for strips in [2, 4] {
+                cases.push((None, None, gearhash::Avx2Window::new(size, strips)));
+            }
         }
-        assert_eq!(expected.len(), fused.len());
-        assert!(actual.read_chunk().unwrap().is_none());
+        for (unroll, experiment, geometry) in cases {
+            let mut actual = StreamCDC::new(Cursor::new(data), config).unwrap();
+            actual.unroll = unroll;
+            actual.experiment = experiment;
+            actual.geometry = geometry;
+            for (reference, fused) in expected.iter().zip(&fused) {
+                let chunk = actual.read_chunk().unwrap().unwrap();
+                assert_eq!(
+                    (chunk.offset, chunk.data.len(), chunk.hash),
+                    (reference.offset, reference.length, reference.hash)
+                );
+                assert_eq!(chunk.data, reference.data);
+                assert_eq!(chunk.digest, blake3::hash(&reference.data));
+                assert_eq!(chunk.digest, fused.blake_hash);
+                assert_eq!(chunk.data, fused.data);
+            }
+            assert_eq!(expected.len(), fused.len());
+            assert!(actual.read_chunk().unwrap().is_none());
+        }
     }
 
     #[test]
@@ -240,7 +308,7 @@ mod tests {
                 state as u8
             })
             .collect();
-        for batch in [1, 64, 1023, 1024, 1025, 8192] {
+        for batch in [1, 64, 1023, 1024, 1025, 8192, 10240, 10241, 65537] {
             for (min, avg, max) in [
                 (64, 256, 4096),
                 (4096, 10240, 65536),
@@ -282,6 +350,9 @@ mod tests {
         assert!(Config::new(64, 256, 4096, 0).is_err());
         assert!(Config::new(64, 256, 4096, usize::MAX).is_err());
         assert_eq!(Config::new(64, 256, 4096, 64).unwrap().window, 1024);
+        let config = Config::new(64, 256, 4096, 1025).unwrap();
+        assert_eq!(config.window, 2048);
+        assert_eq!(config.batch, 1025);
     }
 
     #[test]

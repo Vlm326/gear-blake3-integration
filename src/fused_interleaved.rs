@@ -1,11 +1,11 @@
 //! Historical interleaved Gear/BLAKE3 implementation from commit 194611c.
 //!
-//! Unlike the current fused scanner, this version checks whether enough bytes
+//! Unlike the current fused-base scanner, this version checks whether enough bytes
 //! have been scanned and may call `Hasher::update` after every Gear candidate
 //! pair. The 64-byte update threshold and the placement of the progress call
-//! intentionally match that historical implementation.
+//! intentionally match that fused-interleaved implementation.
 
-use crate::fused_stream_cdc::FusedChunkData;
+use crate::fused_base::FusedChunkData;
 use fastcdc::v2020::{
     AVERAGE_MAX, AVERAGE_MIN, Error as CdcError, MAXIMUM_MAX, MAXIMUM_MIN, MINIMUM_MAX,
     MINIMUM_MIN, Normalization, get_gear_with_seed, select_masks,
@@ -136,7 +136,7 @@ impl<R: Read> Iterator for HistoricalStreamCDC<R> {
     }
 }
 
-pub fn process_file_historical<R: Read>(reader: R) -> Result<(), Box<dyn Error>> {
+pub fn process_file_fused_interleaved<R: Read>(reader: R) -> Result<(), Box<dyn Error>> {
     let min_chunk = std::env::var("MIN_CHUNK_SIZE")
         .unwrap_or_else(|_| "16384".to_string())
         .parse()
@@ -352,7 +352,7 @@ fn scan_region_with_interleaved_blake3(
     None
 }
 
-// Intentionally retains the historical per-candidate progress check.
+// Intentionally retains the fused-interleaved per-candidate progress check.
 fn feed_blake3_progress(
     source: &[u8],
     hasher: &mut blake3::Hasher,

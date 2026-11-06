@@ -12,7 +12,7 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-MODES = ['baseline', 'fused', 'chunking_only', 'blake3_only']
+MODES = ['baseline', 'fused-base', 'chunking-only', 'blake3-only']
 EVENTS = {
     'basic': ['cycles:u', 'instructions:u', 'cache-references:u', 'cache-misses:u'],
     'l1': ['L1-dcache-loads:u', 'L1-dcache-load-misses:u'],
@@ -94,7 +94,7 @@ def table(folder, size, iterations, repeats):
     lines = [f'# Кэш-профиль: {folder.name}', '',
              f'Вход: несжатый tar, {size:,} байт; {iterations} итераций, {repeats} повторов; CPU 3.',
              'min/avg/max = 4096/10240/65536; batch = 8192.', '',
-             'Дельта = (fused / baseline − 1) × 100%; для долей также относительная.',
+             'Дельта = (fused-base / baseline − 1) × 100%; для долей также относительная.',
              'Счётчики — средние perf; ± у счётчиков — относительный разброс perf, у времени — абсолютный.',
              'Производные показатели рассчитаны по средним. — означает отсутствие данных.', '']
     for modes in [MODES[:2], MODES[2:]]:
@@ -110,16 +110,16 @@ def table(folder, size, iterations, repeats):
             lines.append(line)
         lines.append('')
     a = data['baseline']['basic'].get('time', (0,))[0]
-    b = data['fused']['basic'].get('time', (0,))[0]
+    b = data['fused-base']['basic'].get('time', (0,))[0]
     if b:
-        lines += [f'Ускорение fused по времени общего замера: **{a / b:.3f}×**.', '']
+        lines += [f'Ускорение fused-base по времени общего замера: **{a / b:.3f}×**.', '']
     lines += ['Источники: одноимённые `<режим>_<набор>.txt` в этом каталоге.',
               'Каждый набор событий измерен отдельным запуском. Измеряется весь процесс, включая чтение tar,',
-              'а для blake3_only — загрузку и проверку карты. Кэши между итерациями не очищаются.',
+              'а для blake3-only — загрузку и проверку карты. Кэши между итерациями не очищаются.',
               'Tar включает заголовки и заполнение; чанки могут пересекать границы файлов.',
               'L3 включает фон всей системы; нормирование на MiB его не исключает.',
-              'Generic-события зависят от CPU. Baseline сохраняет чанки, fused обрабатывает потоком.',
-              'Chunking_only включает копирование и аллокации; blake3_only хеширует срезы.',
+              'Generic-события зависят от CPU. Baseline сохраняет чанки, fused-base обрабатывает потоком.',
+              'Chunking_only включает копирование и аллокации; blake3-only хеширует срезы.',
               'Времена отдельных этапов нельзя складывать как точное разложение baseline.']
     (folder / 'table.md').write_text('\n'.join(lines) + '\n')
 
@@ -177,11 +177,11 @@ def main():
         commands.append(shlex.join(cmd))
         size = archive.stat().st_size
         chunkmap = folder / 'chunks.tsv'
-        cmd = ['./target/release/hash_combination', '--mode', 'prepare_chunks', '--chunk-map', str(chunkmap), str(archive)]
+        cmd = ['./target/release/hash_combination', '--mode', 'prepare-chunks', '--chunk-map', str(chunkmap), str(archive)]
         subprocess.run(cmd, check=True, env=env)
         commands.append(shlex.join(['env', *[f'{k}={v}' for k, v in ENV.items()], *cmd]))
         if not meta['datasets']:
-            pilot = ['taskset', '-c', '3', './target/release/hash_combination', '--mode', 'fused', '--iterations', str(args.iterations), str(archive)]
+            pilot = ['taskset', '-c', '3', './target/release/hash_combination', '--mode', 'fused-base', '--iterations', str(args.iterations), str(archive)]
             started = time.monotonic()
             subprocess.run(pilot, check=True, env=env, stdout=subprocess.DEVNULL)
             elapsed = time.monotonic() - started
@@ -197,7 +197,7 @@ def main():
                 if group == 'l3':
                     cmd = ['sudo', '-n', *cmd, '-a']
                 cmd += ['-r', str(args.repeats), '-e', '{' + ','.join(events) + '}', '-o', str(folder / f'{mode}_{group}.txt'), '--', 'taskset', '-c', '3', './target/release/hash_combination', '--mode', mode, '--iterations', str(args.iterations)]
-                if mode == 'blake3_only':
+                if mode == 'blake3-only':
                     cmd += ['--chunk-map', str(chunkmap)]
                 cmd.append(str(archive))
                 if group == 'l3' and l3.returncode:

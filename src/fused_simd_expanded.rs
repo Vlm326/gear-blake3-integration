@@ -507,6 +507,44 @@ fn blake3_fed_until(
     }
 }
 
+pub fn process_file_fused_simd_expanded<R: Read>(
+    reader: R,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let min_chunk = std::env::var("MIN_CHUNK_SIZE")
+        .unwrap_or_else(|_| "16384".to_string())
+        .parse()
+        .unwrap();
+    let avg_chunk = std::env::var("AVG_CHUNK_SIZE")
+        .unwrap_or_else(|_| "65536".to_string())
+        .parse()
+        .unwrap();
+    let max_chunk = std::env::var("MAX_CHUNK_SIZE")
+        .unwrap_or_else(|_| "262144".to_string())
+        .parse()
+        .unwrap();
+    let chunker = StreamCDC::new(reader, min_chunk, avg_chunk, max_chunk);
+    let mut chunk_count = 0usize;
+    let mut total_bytes = 0u64;
+
+    for result in chunker {
+        let chunk = result?;
+        chunk_count += 1;
+        total_bytes += chunk.length as u64;
+
+        // Используем дайджест, который уже вычислил FusedStreamCDC; второй
+        // проход BLAKE3 здесь не запускается.
+        let result = super::types::ChunkDigest {
+            offset: chunk.offset,
+            length: chunk.length,
+            digest: chunk.blake_hash,
+        };
+        std::hint::black_box((result.offset, result.length, result.digest));
+    }
+
+    std::hint::black_box((chunk_count, total_bytes));
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::StreamCDC as FusedStreamCDC;

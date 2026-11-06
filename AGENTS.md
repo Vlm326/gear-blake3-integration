@@ -14,8 +14,8 @@ Rust 2024 CLI для исследования совместного выпол�
 Сначала прочитай документы с готовыми командами, прежде чем составлять новый замер:
 
 - [docs/cache_profiling_commands.md](docs/cache_profiling_commands.md) — основные
-  самостоятельные команды `perf stat` для `baseline`, `fused`, `chunking_only`
-  и `blake3_only`: подготовка release-сборки и карты чанков, общие счётчики,
+  самостоятельные команды `perf stat` для `baseline`, `fused-base`, `chunking-only`
+  и `blake3-only`: подготовка release-сборки и карты чанков, общие счётчики,
   L1/L2/L3, dTLB, закрепление CPU, повторы и формулы сравнения результатов.
 - [scripts/README.md](scripts/README.md) — запуск sweep по batch/размерам чанков,
   замеры на архивах ядер Linux, `perf record`, Cachegrind, требования к скриптам
@@ -39,7 +39,7 @@ env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 \
   AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 \
   perf stat -r 5 -e cycles:u,instructions:u -- \
   taskset -c 3 ./target/release/hash_combination \
-  --mode fused --iterations 50 artifacts/inputs/base_photo.png
+  --mode fused-base --iterations 50 artifacts/inputs/base_photo.png
 ```
 
 Это пример для Linux: входной файл должен быть подготовлен локально, CPU 3 должен
@@ -52,14 +52,14 @@ env LC_ALL=C BLAKE3_BATCH=8192 MIN_CHUNK_SIZE=4096 \
 - `src/main.rs` — разбор CLI, загрузка входов и выбор режима. Каталог обходится
   рекурсивно; каждый файл читается один раз, итерации обрабатывают буфер в памяти.
 - `baseline` (`src/baseline.rs`) — сначала собирает чанки FastCDC, затем хеширует их.
-- `fused` (`src/fused.rs`, `src/fused_stream_cdc.rs`) — совмещает поиск границ с BLAKE3.
-- `historical` (`src/historical_fused.rs`) — исторический interleaved-вариант.
-- `simd` и `simd-bad` — экспериментальные AVX2-сканеры в соответствующих модулях
+- `fused-base` (`src/fused_base.rs`, `src/fused_base.rs`) — совмещает поиск границ с BLAKE3.
+- `fused-interleaved` (`src/fused_interleaved.rs`) — исторический interleaved-вариант.
+- `fused-simd-check` и `fused-simd-expanded` — экспериментальные AVX2-сканеры в соответствующих модулях
   `src/simd*.rs`; проверяют AVX2 во время выполнения и имеют скалярный fallback.
-- `gearhash-simd` (`src/gearhash_simd.rs`) — реализация через локальную копию
+- `fused-simd-stripes` (`src/fused_simd_stripes.rs`) — реализация через локальную копию
   `gearhash`; требует AVX2 на x86_64 или NEON на aarch64.
-- `src/isolated.rs` — `chunking_only` (FastCDC с сохранением чанков без BLAKE3),
-  `prepare_chunks` (сохранение границ), `blake3_only` (хеширование срезов по карте).
+- `src/isolated.rs` — `chunking-only` (FastCDC с сохранением чанков без BLAKE3),
+  `prepare-chunks` (сохранение границ), `blake3-only` (хеширование срезов по карте).
 - В рабочем дереве могут быть дополнительные эксперименты, например
   `fused-windowed` и варианты AVX2. Проверяй `src/main.rs`, README и `git status`:
   локальные изменения не обязательно опубликованы в GitHub.
@@ -118,11 +118,11 @@ CI описан в [.github/workflows/ci.yml](.github/workflows/ci.yml): push в
 - Внешний `perf stat` измеряет весь процесс, включая загрузку файла, карты
   и аллокации. CPU-кэши между итерациями не очищаются. `perf stat -r` повторяет
   процесс; `--iterations` повторяет обработку внутри процесса.
-- Для `prepare_chunks` и `blake3_only` нужны ровно один обычный файл и `--chunk-map`.
-  Карта не перезаписывается; `prepare_chunks` допускает только одну итерацию.
+- Для `prepare-chunks` и `blake3-only` нужны ровно один обычный файл и `--chunk-map`.
+  Карта не перезаписывается; `prepare-chunks` допускает только одну итерацию.
   Карта проверяется по размеру и границам, но не обнаруживает изменение содержимого
   при прежнем размере файла. Пересоздавай её при изменении входа или настроек чанкинга.
-- `chunking_only` включает копирование и аллокации baseline, `blake3_only` хеширует
+- `chunking-only` включает копирование и аллокации baseline, `blake3-only` хеширует
   срезы исходного буфера. Сумма времён этих режимов не обязана равняться baseline.
 
 ## Файлы, локальные данные и безопасность изменений

@@ -39,12 +39,12 @@ def main():
             )
 
         for mode in (
-            "baseline", "fused", "simd", "simd-bad",
-            "gearhash-simd", "historical", "chunking_only",
+            "baseline", "fused-base", "fused-windowed", "fused-simd-check", "fused-simd-expanded",
+            "fused-simd-stripes", "fused-interleaved", "chunking-only",
         ):
             run(mode)
-        run("prepare_chunks", "--chunk-map", str(map_path))
-        run("blake3_only", "--chunk-map", str(map_path))
+        run("prepare-chunks", "--chunk-map", str(map_path))
+        run("blake3-only", "--chunk-map", str(map_path))
 
 
 if __name__ == "__main__":

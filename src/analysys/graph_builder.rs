@@ -176,7 +176,7 @@ fn collect_speedups(
         .map(|(key, (fused_times, baseline_times))| {
             if fused_times.is_empty() || baseline_times.is_empty() {
                 return Err(invalid_data(format!(
-                    "missing fused or baseline measurements for batch={} and chunks={:?}",
+                    "missing fused-base or baseline measurements for batch={} and chunks={:?}",
                     key.0, key.1
                 )));
             }

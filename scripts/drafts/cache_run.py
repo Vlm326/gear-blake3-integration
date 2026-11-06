@@ -15,7 +15,7 @@ def run_benches(batch=DEFAULT_BATCH, chunk_sizes=DEFAULT_CHUNK_SIZES):
                 env["MAX_CHUNK_SIZE"] = str(max_chunk)
 
                 runs = [
-                    ("fused", COMMAND_FUSED_FOR_HEATING, COMMAND_FUSED, fused_log),
+                    ("fused-base", COMMAND_FUSED_FOR_HEATING, COMMAND_FUSED, fused_log),
                     (
                         "baseline",
                         COMMAND_BASELINE_FOR_HEATING,

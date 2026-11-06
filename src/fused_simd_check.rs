@@ -4,7 +4,9 @@ use fastcdc::v2020::{
 };
 use std::{borrow::Cow, io::Read};
 
-/// A chunk and its Gear and BLAKE3 hashes.
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct FusedChunkData {
     /// The gear hash value as of the end of the chunk.
@@ -331,8 +333,62 @@ fn finish_blake_hasher_at(
     blake_hasher.finalize()
 }
 
+/// Проверяет четыре последовательных кандидата одним AVX2-сравнением.
+/// Состояния на первом байте каждой пары удвоены, как в скалярном FastCDC.
 #[allow(clippy::too_many_arguments)]
-fn scan_region(
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn scan_region_avx2(
+    source: &[u8],
+    start: usize,
+    end: usize,
+    hash: &mut u64,
+    mask_ls: u64,
+    mask: u64,
+    gear: &[u64; 256],
+    gear_ls: &[u64; 256],
+) -> Option<usize> {
+    let mut offset = start;
+    let (blocks, _) = source[start..end].as_chunks::<4>();
+    let mut current_hash = *hash;
+    let masks = _mm256_set_epi64x(mask as i64, mask_ls as i64, mask as i64, mask_ls as i64);
+    let zero = _mm256_setzero_si256();
+    for bytes in blocks {
+        let g0 = gear_ls[bytes[0] as usize];
+        let g1 = gear[bytes[1] as usize];
+        let g2 = gear_ls[bytes[2] as usize];
+        let g3 = gear[bytes[3] as usize];
+        let h0 = (current_hash << 2).wrapping_add(g0);
+        let h1 = h0.wrapping_add(g1);
+        let h2 = (h1 << 2).wrapping_add(g2);
+        let h3 = h2.wrapping_add(g3);
+        let hashes = _mm256_set_epi64x(h3 as i64, h2 as i64, h1 as i64, h0 as i64);
+        let masked = _mm256_and_si256(hashes, masks);
+        let equal_zero = _mm256_cmpeq_epi64(masked, zero);
+        let matches = _mm256_movemask_pd(_mm256_castsi256_pd(equal_zero)) as u32;
+        if matches != 0 {
+            let lane = matches.trailing_zeros() as usize;
+            *hash = match lane {
+                0 => h0,
+                1 => h1,
+                2 => h2,
+                3 => h3,
+                _ => unreachable!(),
+            };
+            return Some(offset + lane);
+        }
+        current_hash = h3;
+        offset += 4;
+    }
+    *hash = current_hash;
+    if offset < end {
+        return scan_region_scalar(source, offset, end, hash, mask_ls, mask, gear, gear_ls);
+    }
+    None
+}
+
+#[allow(clippy::too_many_arguments)]
+fn scan_region_scalar(
     source: &[u8],
     start: usize,
     end: usize,
@@ -393,6 +449,25 @@ fn scan_region(
     None
 }
 
+#[allow(clippy::too_many_arguments)]
+fn scan_region(
+    source: &[u8],
+    start: usize,
+    end: usize,
+    hash: &mut u64,
+    mask_ls: u64,
+    mask: u64,
+    gear: &[u64; 256],
+    gear_ls: &[u64; 256],
+) -> Option<usize> {
+    #[cfg(target_arch = "x86_64")]
+    if is_x86_feature_detected!("avx2") {
+        // SAFETY: поддержка AVX2 проверена перед вызовом.
+        return unsafe { scan_region_avx2(source, start, end, hash, mask_ls, mask, gear, gear_ls) };
+    }
+    scan_region_scalar(source, start, end, hash, mask_ls, mask, gear, gear_ls)
+}
+
 #[inline]
 fn blake3_fed_until(
     source: &[u8],
@@ -407,11 +482,153 @@ fn blake3_fed_until(
     }
 }
 
+pub fn process_file_fused_simd_check<R: Read>(reader: R) -> Result<(), Box<dyn std::error::Error>> {
+    let min_chunk = std::env::var("MIN_CHUNK_SIZE")
+        .unwrap_or_else(|_| "16384".to_string())
+        .parse()
+        .unwrap();
+    let avg_chunk = std::env::var("AVG_CHUNK_SIZE")
+        .unwrap_or_else(|_| "65536".to_string())
+        .parse()
+        .unwrap();
+    let max_chunk = std::env::var("MAX_CHUNK_SIZE")
+        .unwrap_or_else(|_| "262144".to_string())
+        .parse()
+        .unwrap();
+    let chunker = StreamCDC::new(reader, min_chunk, avg_chunk, max_chunk);
+    let mut chunk_count = 0usize;
+    let mut total_bytes = 0u64;
+
+    for result in chunker {
+        let chunk = result?;
+        chunk_count += 1;
+        total_bytes += chunk.length as u64;
+
+        // Используем дайджест, который уже вычислил FusedStreamCDC; второй
+        // проход BLAKE3 здесь не запускается.
+        let result = super::types::ChunkDigest {
+            offset: chunk.offset,
+            length: chunk.length,
+            digest: chunk.blake_hash,
+        };
+        std::hint::black_box((result.offset, result.length, result.digest));
+    }
+
+    std::hint::black_box((chunk_count, total_bytes));
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::StreamCDC as FusedStreamCDC;
+    #[cfg(target_arch = "x86_64")]
+    use super::{scan_region_avx2, scan_region_scalar};
     use fastcdc::v2020::StreamCDC as ReferenceStreamCDC;
+    use fastcdc::v2020::{Normalization, get_gear_with_seed, select_masks};
     use std::io::Cursor;
+
+    #[test]
+    #[cfg(target_arch = "x86_64")]
+    fn avx2_returns_first_matching_lane_and_its_hash() {
+        if !is_x86_feature_detected!("avx2") {
+            eprintln!("skipping AVX2 test: unsupported CPU");
+            return;
+        }
+
+        let source = [255, 255, 0, 1, 2, 3, 255];
+        // With G[b] = 1 and masks 1/2, none of the four candidates matches.
+        // Setting G[lane] = 0 makes that candidate the first match.
+        for expected_lane in 0..4 {
+            let mut gear = [1u64; 256];
+            gear[expected_lane] = 0;
+            let gear_ls = gear.map(|value| value << 1);
+            let mut expected_hash = 0;
+            let mut actual_hash = 0;
+            let expected =
+                scan_region_scalar(&source, 2, 6, &mut expected_hash, 2, 1, &gear, &gear_ls);
+            // SAFETY: AVX2 was detected above.
+            let actual =
+                unsafe { scan_region_avx2(&source, 2, 6, &mut actual_hash, 2, 1, &gear, &gear_ls) };
+            assert_eq!(expected, Some(2 + expected_lane));
+            assert_eq!(actual, expected);
+            assert_eq!(actual_hash, expected_hash);
+        }
+
+        // All candidates match: choose the first, including its shifted state.
+        let gear = [1u64; 256];
+        let gear_ls = gear.map(|value| value << 1);
+        let mut hash = 7;
+        // SAFETY: AVX2 was detected above.
+        let cut = unsafe { scan_region_avx2(&source, 2, 6, &mut hash, 0, 0, &gear, &gear_ls) };
+        assert_eq!(cut, Some(2));
+        assert_eq!(hash, (7 << 2) + 2);
+    }
+
+    #[test]
+    #[cfg(target_arch = "x86_64")]
+    fn avx2_matches_scalar_across_regions_masks_and_initial_states() {
+        if !is_x86_feature_detected!("avx2") {
+            eprintln!("skipping AVX2 test: unsupported CPU");
+            return;
+        }
+
+        let mut state = 0x1234_5678_9abc_def0u64;
+        let source: Vec<u8> = (0..132)
+            .map(|_| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                state as u8
+            })
+            .collect();
+        let (strict, relaxed) = select_masks(256, Normalization::Level1);
+
+        for seed in [0, 42, u64::MAX] {
+            let (gear, gear_ls) = get_gear_with_seed(seed);
+            let gear: &[u64; 256] = gear.as_ref().try_into().unwrap();
+            let gear_ls: &[u64; 256] = gear_ls.as_ref().try_into().unwrap();
+            for mask in [0, 1, 0xff, strict, relaxed, u64::MAX] {
+                for initial_hash in [0, 1, state, u64::MAX] {
+                    for start in 0..4 {
+                        // Cover full blocks, leftover pairs and ignored odd tails.
+                        for length in 0..=128 {
+                            let end = start + length;
+                            let mut expected_hash = initial_hash;
+                            let mut actual_hash = initial_hash;
+                            let expected = scan_region_scalar(
+                                &source,
+                                start,
+                                end,
+                                &mut expected_hash,
+                                mask << 1,
+                                mask,
+                                gear,
+                                gear_ls,
+                            );
+                            // SAFETY: AVX2 was detected above.
+                            let actual = unsafe {
+                                scan_region_avx2(
+                                    &source,
+                                    start,
+                                    end,
+                                    &mut actual_hash,
+                                    mask << 1,
+                                    mask,
+                                    gear,
+                                    gear_ls,
+                                )
+                            };
+                            assert_eq!(
+                                (actual, actual_hash),
+                                (expected, expected_hash),
+                                "seed={seed}, mask={mask:#x}, initial={initial_hash:#x}, start={start}, length={length}",
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn fused_stream_matches_reference_chunks_and_digests() {

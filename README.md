@@ -5,19 +5,19 @@
 Исследуется совмещение разбиения данных на чанки FastCDC с вычислением хешей BLAKE3. Основные режимы сравнения:
 
 - `baseline`: сначала формирует чанки FastCDC, затем отдельно хеширует каждый чанк;
-- `fused`: вычисляет BLAKE3 одновременно с поиском границ чанков;
-- `simd`: AVX2 одновременно проверяет четыре кандидата, Gear-состояние между блоками вычисляется скалярно;
-- `simd-bad`: экспериментальный вариант, который хранит Gear-состояние в YMM и оказался медленнее в текущем замере;
-- `gearhash-simd`: экспериментальная реализация на локальной копии `gearhash`, требует AVX2 на x86_64 или NEON на aarch64;
-- `historical`: исторический interleaved-вариант из коммита `194611c`, проверяющий
+- `fused-base`: вычисляет BLAKE3 одновременно с поиском границ чанков;
+- `fused-simd-check`: AVX2 одновременно проверяет четыре кандидата, Gear-состояние между блоками вычисляется скалярно;
+- `fused-simd-expanded`: экспериментальный вариант, который хранит Gear-состояние в YMM и оказался медленнее в текущем замере;
+- `fused-simd-stripes`: экспериментальная реализация на локальной копии `gearhash`, требует AVX2 на x86_64 или NEON на aarch64;
+- `fused-interleaved`: исторический interleaved-вариант из коммита `194611c`, проверяющий
   продвижение BLAKE3 после каждого кандидата Gear и обновляющий хешер порциями
   по 64 байта.
 
 Для раздельного измерения этапов добавлены:
 
-- `chunking_only`: FastCDC и сохранение всех чанков, как в baseline, без BLAKE3;
-- `blake3_only`: BLAKE3 каждого среза входа по заранее сохранённым границам, без FastCDC и копирования данных в отдельные чанки;
-- `prepare_chunks`: однократное сохранение границ FastCDC для последующего запуска `blake3_only`.
+- `chunking-only`: FastCDC и сохранение всех чанков, как в baseline, без BLAKE3;
+- `blake3-only`: BLAKE3 каждого среза входа по заранее сохранённым границам, без FastCDC и копирования данных в отдельные чанки;
+- `prepare-chunks`: однократное сохранение границ FastCDC для последующего запуска `blake3-only`.
 
 Тесты сравнивают границы, содержимое чанков и хеши реализаций и проверяют загрузку карт границ.
 
@@ -33,13 +33,13 @@ release-сборка и тесты (`cargo build --release --locked`, `cargo tes
 
 `python scripts/ci_smoke.py` после release-сборки проверяет все режимы обработки
 на 8 МиБ воспроизводимых псевдослучайных данных, включая
-цикл `prepare_chunks` → `blake3_only`. Нужен Python 3.9 или новее;
+цикл `prepare-chunks` → `blake3-only`. Нужен Python 3.9 или новее;
 запускать из корня репозитория. Данные и карта создаются во временном каталоге
 и удаляются после проверки. Тесты Rust также генерируют собственные данные
 и не требуют `artifacts/inputs/`.
 
-`simd` и `simd-bad` выбирают AVX2 во время выполнения и используют скалярную
-реализацию при его отсутствии, в том числе на aarch64. `gearhash-simd` требует
+`fused-simd-check` и `fused-simd-expanded` выбирают AVX2 во время выполнения и используют скалярную
+реализацию при его отсутствии, в том числе на aarch64. `fused-simd-stripes` требует
 AVX2 на x86_64 или NEON на aarch64. Архитектурные ветки защищены `#[cfg]`;
 глобальные `RUSTFLAGS` с `target-feature` не нужны.
 
@@ -53,18 +53,18 @@ CI не собирает показатели производительност
 Обработка файла или всех файлов в каталоге:
 
 ```sh
-cargo run --release -- [--mode baseline|fused|simd|simd-bad|gearhash-simd|historical|chunking_only] [--iterations N] <файл-или-каталог>
+cargo run --release -- [--mode baseline|fused-base|fused-simd-check|fused-simd-expanded|fused-simd-stripes|fused-interleaved|chunking-only] [--iterations N] <файл-или-каталог>
 ```
 
 По умолчанию используется режим `baseline` и одна итерация. Например:
 
 ```sh
 cargo run --release -- --mode baseline --iterations 10 ./путь/к/данным
-cargo run --release -- --mode fused --iterations 10 ./путь/к/данным
-cargo run --release -- --mode simd --iterations 10 ./путь/к/данным
-cargo run --release -- --mode simd-bad --iterations 10 ./путь/к/данным
-cargo run --release -- --mode gearhash-simd --iterations 10 ./путь/к/данным
-cargo run --release -- --mode historical --iterations 10 ./путь/к/данным
+cargo run --release -- --mode fused-base --iterations 10 ./путь/к/данным
+cargo run --release -- --mode fused-simd-check --iterations 10 ./путь/к/данным
+cargo run --release -- --mode fused-simd-expanded --iterations 10 ./путь/к/данным
+cargo run --release -- --mode fused-simd-stripes --iterations 10 ./путь/к/данным
+cargo run --release -- --mode fused-interleaved --iterations 10 ./путь/к/данным
 ```
 
 Каждый файл загружается в память один раз; `--iterations N` повторно обрабатывает эти данные N раз.
@@ -75,17 +75,17 @@ cargo run --release -- --mode historical --iterations 10 ./путь/к/данн�
 те же параметры чанков, что использованы в baseline/fused:
 
 ```sh
-env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/release/hash_combination --mode prepare_chunks --chunk-map /tmp/base_photo.chunks.tsv artifacts/inputs/base_photo.png
+env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/release/hash_combination --mode prepare-chunks --chunk-map /tmp/base_photo.chunks.tsv artifacts/inputs/base_photo.png
 ```
 
 Затем запускай этапы отдельно:
 
 ```sh
-env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/release/hash_combination --mode chunking_only --iterations 50 artifacts/inputs/base_photo.png
-./target/release/hash_combination --mode blake3_only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
+env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/release/hash_combination --mode chunking-only --iterations 50 artifacts/inputs/base_photo.png
+./target/release/hash_combination --mode blake3-only --chunk-map /tmp/base_photo.chunks.tsv --iterations 50 artifacts/inputs/base_photo.png
 ```
 
-`chunking_only` поддерживает файлы и каталоги. `prepare_chunks` и `blake3_only`
+`chunking-only` поддерживает файлы и каталоги. `prepare-chunks` и `blake3-only`
 принимают ровно один обычный файл и требуют `--chunk-map`; подготовка допускает
 только одну итерацию. Существующая карта не перезаписывается: для новой серии
 выбери новый путь или заранее удали старую карту.
@@ -95,16 +95,16 @@ env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/relea
 далее пары `смещение<TAB>длина`. Для пустого входа пар нет. При загрузке проверяются
 размер файла, корректность настроек и полное непрерывное покрытие входа границами.
 
-`blake3_only` использует границы из карты: переменные размеров чанков и
+`blake3-only` использует границы из карты: переменные размеров чанков и
 `BLAKE3_BATCH` на него не влияют. Пересоздавай карту при изменении входа или
 настроек FastCDC. Изменение содержимого при прежнем размере автоматически
 не обнаруживается: проверка полным хешем сама добавила бы хеширование в замер.
 Не добавляй карты локальных входных данных в Git.
 
 Обычный `perf stat` измеряет весь процесс, включая однократную загрузку входа
-и карты, но FastCDC в `blake3_only` вообще не вызывается. Большое число итераций
-уменьшает долю этой подготовки. `chunking_only` сохраняет аллокации baseline,
-а `blake3_only` хеширует срезы исходного буфера: разности времени этапов служат
+и карты, но FastCDC в `blake3-only` вообще не вызывается. Большое число итераций
+уменьшает долю этой подготовки. `chunking-only` сохраняет аллокации baseline,
+а `blake3-only` хеширует срезы исходного буфера: разности времени этапов служат
 ориентиром, их сумма не обязана совпадать со временем baseline из-за различий
 в размещении данных и состоянии кэша.
 
@@ -113,7 +113,7 @@ env MIN_CHUNK_SIZE=4096 AVG_CHUNK_SIZE=10240 MAX_CHUNK_SIZE=65536 ./target/relea
 
 ## Построение графика
 
-Отдельная утилита `build-graph` сравнивает замеры `fused` и `baseline` для одинаковых конфигураций batch и размеров чанков. Он читает `artifacts/benchmarks/chunk_sweep/results.txt` и `results_baseline.txt`, вычисляет ускорение по медианному времени замеров и создаёт SVG-график `artifacts/charts/speedup.svg`:
+Отдельная утилита `build-graph` сравнивает замеры `fused-base` и `baseline` для одинаковых конфигураций batch и размеров чанков. Он читает `artifacts/benchmarks/chunk_sweep/results.txt` и `results_baseline.txt`, вычисляет ускорение по медианному времени замеров и создаёт SVG-график `artifacts/charts/speedup.svg`:
 
 ```sh
 cargo run --release --features reports --bin build-graph
@@ -136,7 +136,7 @@ Fontconfig и FreeType; текст SVG отображается шрифтами
 
 Для FastCDC используется submodule [`fastcdc-rs`](https://github.com/nlfiedler/fastcdc-rs), автор — Nathan Fiedler; лицензия — MIT. Уведомления об авторстве и файл лицензии сохранены в submodule `crates/fastcdc-rs`.
 
-Экспериментальный режим `gearhash-simd` использует локальную копию `gearhash` 0.1.4 из `crates/gearhash/`. Исходный проект — [`srijs/rust-gearhash`](https://github.com/srijs/rust-gearhash); вендорированная копия сохраняет лицензии MIT и Apache-2.0 и уведомления об авторстве.
+Экспериментальный режим `fused-simd-stripes` использует локальную копию `gearhash` 0.1.4 из `crates/gearhash/`. Исходный проект — [`srijs/rust-gearhash`](https://github.com/srijs/rust-gearhash); вендорированная копия сохраняет лицензии MIT и Apache-2.0 и уведомления об авторстве.
 
 ## Лицензии
 
@@ -191,3 +191,17 @@ Fontconfig и FreeType; текст SVG отображается шрифтами
 Папка `artifacts/reports/` находится только в ветке `reports`. Изменения структуры из `main` следует переносить в `reports` отдельно.
 
 После уборки `artifacts/` содержит итоговые материалы. Сырые замеры и локальные входы сохранены вне него в игнорируемом `.local-research/2026-10-29-artifacts/`; для повторного запуска входы нужно восстановить в `artifacts/inputs/`.
+
+## Имена экспериментальных режимов
+
+Режимы организованы в семейство `fused-*`: `fused-base` — скалярная основа, `fused-interleaved` — частое чередование с BLAKE3, `fused-windowed` — чередование окнами, `fused-simd-check` — SIMD-проверка кандидатов, `fused-simd-expanded` — раскрытые формулы состояний, `fused-simd-stripes` — параллельное сканирование участков.
+
+Для `fused-windowed` переменная `BLAKE3_BATCH` задаёт положительное чётное окно (по умолчанию 8192). Для остальных режимов прежний смысл переменной сохранён.
+
+В `fused-simd-stripes` доступны взаимоисключающие группы настроек AVX2:
+
+- `--scanner original|control|expanded|grouped-check|combined` — исходный сканер, контроль, раскрытие зависимостей, групповая проверка и сочетание изменений.
+- `--unroll 1|2|4|8` — число байт на шаг каждого участка.
+- `--strip-size 128|256|512|1024 --strips 2|4` — геометрия параллельных участков.
+
+Переименования CLI несовместимы со старыми командами; парсер отчётов принимает обе метки `fused` и `fused-base`.

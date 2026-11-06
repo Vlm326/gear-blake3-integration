@@ -54,7 +54,7 @@ fn parse_header(header: &str) -> Result<RunHeader, Box<dyn Error>> {
         if let Some(value) = part.strip_prefix("Mode:") {
             mode = Some(match value.trim() {
                 "baseline" => Mode::Baseline,
-                "fused" => Mode::Fused,
+                "fused" | "fused-base" => Mode::Fused,
                 other => return Err(invalid_data(format!("unknown mode {other:?}"))),
             });
         } else if let Some(value) = part.strip_prefix("batch=") {

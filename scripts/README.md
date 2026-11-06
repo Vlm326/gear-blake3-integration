@@ -25,7 +25,7 @@ cargo build --release
 python3 scripts/benchmark_chunk_sweep.py
 ```
 
-Скрипт перебирает заданные в нём размеры чанков и BLAKE3 batch. Для каждой конфигурации выполняется прогрев, затем `perf stat -r 5` для 50 обработок файла. Порядок baseline и fused чередуется между конфигурациями.
+Скрипт перебирает заданные в нём размеры чанков и BLAKE3 batch. Для каждой конфигурации выполняется прогрев, затем `perf stat -r 5` для 50 обработок файла. Порядок baseline и fused-base чередуется между конфигурациями.
 
 Результаты **дописываются** в `artifacts/benchmarks/batch_sweep/results.txt` и `results_baseline.txt`. Перед новой серией следует сохранить предыдущие файлы отдельно, чтобы не смешивать условия измерений. Эти два рабочих файла исключены из Git; существующие архивные серии остаются на месте.
 
@@ -39,7 +39,7 @@ python3 scripts/benchmark_kernel_cache.py --iterations 5 --repeats 5
 Требуется Python 3.11+, GNU tar, perf, taskset и деревья `kernels/linux-*`.
 Скрипт создаёт детерминированный несжатый tar для каждого дерева в игнорируемом
 `artifacts/inputs/`, отдельно готовит карту чанков и последовательно измеряет
-baseline, fused, chunking_only и blake3_only на CPU 3. События и настройки взяты
+baseline, fused-base, chunking-only и blake3-only на CPU 3. События и настройки взяты
 из `docs/cache_profiling_commands.md`. Для трёх ядер нужно около 1,5 GiB свободного места.
 
 Новая серия сохраняется в `artifacts/cache_info/runs/<дата-время>_kernels/`:
@@ -66,10 +66,10 @@ python3 scripts/benchmark_kernel_cache.py --report artifacts/cache_info/runs/<д
 ```sh
 mkdir -p artifacts/profiles/local/my-run
 perf record -o artifacts/profiles/local/my-run/perf.data -- \
-  ./target/release/hash_combination --mode fused --iterations 50 artifacts/inputs/wkiss_1.png
+  ./target/release/hash_combination --mode fused-base --iterations 50 artifacts/inputs/wkiss_1.png
 valgrind --tool=cachegrind \
   --cachegrind-out-file=artifacts/profiles/local/my-run/cachegrind.out.%p \
-  ./target/release/hash_combination --mode fused --iterations 50 artifacts/inputs/wkiss_1.png
+  ./target/release/hash_combination --mode fused-base --iterations 50 artifacts/inputs/wkiss_1.png
 ```
 
 Для этих команд нужны соответственно `perf` и Valgrind. Сохраняемые для публикации профили экспериментов находятся отдельно в `artifacts/profiles/perf/`.

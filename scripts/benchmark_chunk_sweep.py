@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
-COMMAND_FUSED = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode fused --iterations 50 ./artifacts/inputs/wkiss_1.png"
-COMMAND_FUSED_FOR_HEATING = "./target/release/hash_combination --mode fused --iterations 50 ./artifacts/inputs/wkiss_1.png"
+COMMAND_FUSED = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode fused-base --iterations 50 ./artifacts/inputs/wkiss_1.png"
+COMMAND_FUSED_FOR_HEATING = "./target/release/hash_combination --mode fused-base --iterations 50 ./artifacts/inputs/wkiss_1.png"
 COMMAND_BASELINE = "perf stat -r 5 -e cycles,instructions,cache-references,cache-misses -- ./target/release/hash_combination --mode baseline --iterations 50 ./artifacts/inputs/wkiss_1.png"
 COMMAND_BASELINE_FOR_HEATING = "./target/release/hash_combination --mode baseline --iterations 50 ./artifacts/inputs/wkiss_1.png"
 batches = [512, 1024, 8 * 1024, 64 * 1024, 128 * 1024]
@@ -181,7 +181,7 @@ def run_benches():
                 env["MAX_CHUNK_SIZE"] = str(max_chunk)
 
                 runs = [
-                    ("fused", COMMAND_FUSED_FOR_HEATING, COMMAND_FUSED, fused_log),
+                    ("fused-base", COMMAND_FUSED_FOR_HEATING, COMMAND_FUSED, fused_log),
                     (
                         "baseline",
                         COMMAND_BASELINE_FOR_HEATING,
